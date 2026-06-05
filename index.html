@@ -3,141 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>ТСД Сканер Пак-Листов</title>
+    <title>ONEGA ТСД Сканер</title>
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
         }
+        
         body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
+            font-family: 'Segoe UI', 'Roboto', system-ui, -apple-system, sans-serif;
+            background: #f5f5f5;
             margin: 0;
             padding: 16px;
             min-height: 100vh;
         }
+        
         .container {
             max-width: 700px;
             margin: 0 auto;
         }
+        
+        /* ========== КОРПОРАТИВНЫЕ ЦВЕТА ========== */
+        /* Красный: #C62828 | Тёмно-красный: #B71C1C | Белый: #FFFFFF | Серый: #757575 */
+        
         /* Карточки */
         .card {
-            background: #1e293b;
-            border-radius: 24px;
+            background: #FFFFFF;
+            border-radius: 16px;
             padding: 20px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e0e0e0;
         }
+        
         .card-title {
             font-size: 1.2rem;
-            font-weight: bold;
-            color: #e2e8f0;
+            font-weight: 700;
+            color: #C62828;
             margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 8px;
-            border-left: 4px solid #3b82f6;
+            border-left: 4px solid #C62828;
             padding-left: 12px;
         }
+        
         /* Поля ввода */
         .input-group {
             margin-bottom: 16px;
         }
+        
         label {
             display: block;
-            color: #94a3b8;
+            color: #333333;
             font-size: 0.85rem;
             margin-bottom: 6px;
+            font-weight: 500;
         }
+        
         input, select {
             width: 100%;
             padding: 14px;
-            border-radius: 16px;
-            border: 1px solid #334155;
-            background: #0f172a;
-            color: #f1f5f9;
+            border-radius: 12px;
+            border: 1px solid #d0d0d0;
+            background: #FFFFFF;
+            color: #333333;
             font-size: 1rem;
+            transition: border-color 0.2s;
         }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #C62828;
+            box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.1);
+        }
+        
         /* Кнопки */
         .btn {
             padding: 12px 20px;
             border-radius: 40px;
-            font-weight: bold;
+            font-weight: 700;
             font-size: 0.95rem;
             border: none;
             cursor: pointer;
             transition: all 0.2s;
             text-align: center;
         }
+        
         .btn:active {
             transform: scale(0.97);
         }
+        
         .btn-primary {
-            background: #3b82f6;
+            background: #C62828;
             color: white;
+            box-shadow: 0 2px 4px rgba(198, 40, 40, 0.3);
         }
+        
+        .btn-primary:hover {
+            background: #B71C1C;
+        }
+        
         .btn-success {
-            background: #10b981;
+            background: #C62828;
             color: white;
+            box-shadow: 0 2px 4px rgba(198, 40, 40, 0.3);
         }
+        
+        .btn-success:hover {
+            background: #B71C1C;
+        }
+        
         .btn-danger {
-            background: #ef4444;
-            color: white;
+            background: transparent;
+            border: 2px solid #C62828;
+            color: #C62828;
         }
-        .btn-warning {
-            background: #f59e0b;
-            color: white;
+        
+        .btn-danger:hover {
+            background: #FFF5F5;
         }
+        
         .btn-secondary {
-            background: #475569;
+            background: #757575;
             color: white;
         }
+        
+        .btn-secondary:hover {
+            background: #616161;
+        }
+        
         .btn-outline {
             background: transparent;
-            border: 2px solid #3b82f6;
-            color: #3b82f6;
+            border: 1px solid #C62828;
+            color: #C62828;
         }
+        
+        .btn-outline:hover {
+            background: #FFF5F5;
+        }
+        
         .flex {
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
         }
+        
         .flex-between {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
+        
         /* Сканер */
         .scanner-box {
-            background: #020617;
-            border-radius: 20px;
+            background: #fafafa;
+            border-radius: 16px;
             padding: 12px;
             margin: 16px 0;
+            border: 2px solid #C62828;
         }
+        
         video {
             width: 100%;
-            border-radius: 16px;
+            border-radius: 12px;
             background: #000;
         }
-        /* Список сканов - светлый текст на темном фоне */
+        
+        /* Список сканов — белый фон, чёрный текст */
         .scan-list {
             max-height: 320px;
             overflow-y: auto;
             margin-top: 12px;
         }
+        
         .scan-item {
-            background: #0f172a;
+            background: #FFFFFF;
             margin: 8px 0;
             padding: 12px 16px;
             border-radius: 12px;
             font-family: monospace;
             font-size: 0.9rem;
-            border-left: 3px solid #10b981;
-            color: #f1f5f9;  /* Светлый текст */
+            border-left: 4px solid #C62828;
+            color: #333333;
             word-break: break-all;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid #f0f0f0;
         }
+        
         .scan-number {
-            background: #3b82f6;
+            background: #C62828;
             border-radius: 20px;
             padding: 2px 10px;
             font-size: 0.7rem;
@@ -146,51 +201,89 @@
             display: inline-block;
             color: white;
         }
+        
         .counter {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #3b82f6;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #C62828;
             text-align: center;
         }
+        
+        /* Статусы */
         .status {
             padding: 10px;
-            border-radius: 16px;
+            border-radius: 12px;
             text-align: center;
             font-size: 0.85rem;
             margin-top: 12px;
         }
+        
         .status-info {
-            background: #1e293b;
-            color: #94a3b8;
+            background: #f0f0f0;
+            color: #333333;
         }
+        
         .status-success {
-            background: #14532d;
-            color: #bbf7d0;
+            background: #E8F5E9;
+            color: #2E7D32;
         }
+        
         .status-error {
-            background: #7f1a1a;
-            color: #fecaca;
+            background: #FFEBEE;
+            color: #C62828;
         }
+        
         hr {
-            border-color: #334155;
+            border-color: #e0e0e0;
             margin: 16px 0;
         }
+        
         .device-info {
             font-size: 0.7rem;
-            color: #64748b;
+            color: #757575;
             text-align: center;
-            margin-top: 8px;
+            margin-top: 12px;
+        }
+        
+        /* Шапка с логотипом */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #C62828;
+            letter-spacing: 1px;
+        }
+        
+        .logo-sub {
+            font-size: 0.7rem;
+            color: #757575;
+            margin-top: 4px;
+        }
+        
+        /* Адаптация для ТСД */
+        button {
+            min-height: 48px;
         }
     </style>
 </head>
 <body>
 <div class="container">
+    <!-- ШАПКА С ЛОГОТИПОМ -->
+    <div class="header">
+        <div class="logo">ONEGA</div>
+        <div class="logo-sub">Логистика · Сканер ТСД</div>
+    </div>
+
     <!-- ШАГ 1: НАЧАЛЬНЫЙ ЭКРАН (выбор задания) -->
     <div id="startScreen" class="card">
         <div class="card-title">📋 Новое задание</div>
         <div class="input-group">
             <label>🔢 Номер задания / заказа</label>
-            <input type="text" id="taskNumberInput" placeholder="например: ЗАКАЗ-12345 или ПАК-001" autocomplete="off">
+            <input type="text" id="taskNumberInput" placeholder="например: ЗАКАЗ-12345 или ON-001" autocomplete="off">
         </div>
         <div class="input-group">
             <label>📷 Способ ввода</label>
@@ -208,18 +301,18 @@
         <div class="card">
             <div class="flex-between">
                 <div>
-                    <div style="font-size: 0.75rem; color:#94a3b8;">Текущее задание</div>
-                    <div style="font-size: 1.3rem; font-weight: bold; color: #e2e8f0;" id="currentTaskDisplay">—</div>
+                    <div style="font-size: 0.75rem; color:#757575;">Текущее задание</div>
+                    <div style="font-size: 1.3rem; font-weight: 700; color: #C62828;" id="currentTaskDisplay">—</div>
                 </div>
-                <button class="btn btn-secondary" id="closeTaskBtn" style="padding: 8px 16px;">🏠 Закрыть задание</button>
+                <button class="btn btn-secondary" id="closeTaskBtn" style="padding: 8px 16px;">🏠 Закрыть</button>
             </div>
         </div>
 
         <!-- Счетчик -->
         <div class="card">
-            <div class="card-title">📊 Счетчик значений</div>
+            <div class="card-title">📊 Счетчик</div>
             <div class="counter" id="counterValue">0</div>
-            <div style="text-align: center; font-size: 0.8rem; color:#94a3b8;">отсканировано в задании</div>
+            <div style="text-align: center; font-size: 0.8rem; color:#757575;">отсканировано в задании</div>
         </div>
 
         <!-- Область сканирования / ввода -->
@@ -250,7 +343,7 @@
                 <button id="addBtn" class="btn btn-success" style="flex:1;">➕ ДОБАВИТЬ</button>
                 <button id="removeBtn" class="btn btn-danger" style="flex:1;">➖ ИСКЛЮЧИТЬ</button>
             </div>
-            <div style="font-size: 0.7rem; color:#64748b; text-align: center; margin-top: 8px;">
+            <div style="font-size: 0.7rem; color:#757575; text-align: center; margin-top: 8px;">
                 Добавить = +1 к счетчику | Исключить = -1 (если значение есть в списке)
             </div>
         </div>
@@ -262,7 +355,7 @@
                 <button id="clearAllBtn" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.7rem;">🗑️ Очистить всё</button>
             </div>
             <div id="scanListContainer" class="scan-list">
-                <div style="text-align:center; padding: 30px; color:#64748b;">— пока нет значений —</div>
+                <div style="text-align:center; padding: 30px; color:#757575;">— пока нет значений —</div>
             </div>
         </div>
 
@@ -274,7 +367,7 @@
         </div>
     </div>
 
-    <div id="globalStatus" class="status status-info">⚡ Готов к работе</div>
+    <div id="globalStatus" class="status status-info">⚡ ONEGA ТСД Сканер готов</div>
 </div>
 
 <script>
@@ -286,10 +379,9 @@
         const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         const isIPadWithMacUA = /Macintosh/i.test(ua) && isTouch && !window.MSStream;
         
-        // Определяем планшет
-        const isTablet = (isAndroid && !/Mobile/i.test(ua)) ||  // Android без Mobile в UA
-                         (isIOS && /iPad/i.test(ua)) ||          // Старый iPad
-                         isIPadWithMacUA;                         // Новый iPad
+        const isTablet = (isAndroid && !/Mobile/i.test(ua)) ||
+                         (isIOS && /iPad/i.test(ua)) ||
+                         isIPadWithMacUA;
         
         const isMobilePhone = (isAndroid && /Mobile/i.test(ua)) || /iPhone/i.test(ua);
         
@@ -306,17 +398,15 @@
     const device = getDeviceType();
     
     // ==================== ГЛОБАЛЬНОЕ СОСТОЯНИЕ ====================
-    let currentTaskNumber = null;          // номер задания
-    let scannedValues = [];                // массив строк (уникальные)
-    let currentInputMethod = 'camera';     // camera / manual
+    let currentTaskNumber = null;
+    let scannedValues = [];
+    let currentInputMethod = 'camera';
     
-    // Для камеры
     let videoStream = null;
     let scanningActive = false;
     let scanFrameId = null;
     const videoEl = document.getElementById('video');
     
-    // DOM элементы
     const startScreen = document.getElementById('startScreen');
     const mainScreen = document.getElementById('mainScreen');
     const taskNumberInput = document.getElementById('taskNumberInput');
@@ -338,36 +428,32 @@
     const globalStatus = document.getElementById('globalStatus');
     const deviceInfo = document.getElementById('deviceInfo');
     
-    // Показываем тип устройства в интерфейсе
     if (deviceInfo) {
         if (device.isDesktop) {
-            deviceInfo.textContent = '💻 Режим ПК: при завершении задания файл сохранится на диск';
+            deviceInfo.textContent = '💻 ПК-режим: файл сохранится на диск';
         } else if (device.isMobilePhone) {
-            deviceInfo.textContent = '📱 Режим телефона: при завершении откроется окно "Поделиться"';
+            deviceInfo.textContent = '📱 Телефон: откроется "Поделиться"';
         } else if (device.isTablet) {
-            deviceInfo.textContent = '📟 Режим планшета: при завершении вы сможете выбрать действие';
+            deviceInfo.textContent = '📟 Планшет: можно выбрать действие';
         }
     }
     
-    // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
     function showStatus(msg, type = 'info') {
         globalStatus.textContent = msg;
         globalStatus.className = `status status-${type}`;
         setTimeout(() => {
             if (globalStatus.textContent === msg) {
                 globalStatus.className = 'status status-info';
-                globalStatus.textContent = '✅ Готово';
+                globalStatus.textContent = '✅ ONEGA ТСД готов';
             }
         }, 3000);
     }
     
     function updateCounterAndList() {
-        // Обновляем счетчик
         counterValue.textContent = scannedValues.length;
         
-        // Обновляем список
         if (scannedValues.length === 0) {
-            scanListContainer.innerHTML = '<div style="text-align:center; padding: 30px; color:#64748b;">— пока нет значений —</div>';
+            scanListContainer.innerHTML = '<div style="text-align:center; padding: 30px; color:#757575;">— пока нет значений —</div>';
             return;
         }
         
@@ -376,7 +462,7 @@
             html += `
                 <div class="scan-item">
                     <span class="scan-number">${index + 1}</span>
-                    <span style="word-break: break-all;">${escapeHtml(value)}</span>
+                    <span>${escapeHtml(value)}</span>
                 </div>
             `;
         });
@@ -401,12 +487,10 @@
         });
     }
     
-    // Проверка уникальности
     function isValueUnique(value) {
         return !scannedValues.includes(value);
     }
     
-    // Добавить значение (с проверкой уникальности)
     function addValue(value) {
         if (!value || value.trim() === '') {
             showStatus('❌ Нельзя добавить пустое значение', 'error');
@@ -426,7 +510,6 @@
         return true;
     }
     
-    // Исключить значение (с проверкой существования)
     function removeValue(value) {
         if (!value || value.trim() === '') {
             showStatus('❌ Введите значение для исключения', 'error');
@@ -447,8 +530,7 @@
         return true;
     }
     
-    // Получить текущее значение для добавления/удаления
-    let lastScannedValue = null; // последний успешно распознанный QR
+    let lastScannedValue = null;
     
     function getCurrentInputValue() {
         if (currentInputMethod === 'camera') {
@@ -463,7 +545,6 @@
         }
     }
     
-    // ==================== ГЕНЕРАЦИЯ XML ====================
     function generateXML() {
         let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
         xml += '<task>\n';
@@ -479,7 +560,6 @@
         return xml;
     }
     
-    // ==================== ЭКСПОРТ В ЗАВИСИМОСТИ ОТ УСТРОЙСТВА ====================
     function saveToFile(content, filename) {
         const blob = new Blob([content], {type: 'application/xml;charset=utf-8'});
         const link = document.createElement('a');
@@ -498,14 +578,14 @@
         
         try {
             await navigator.share({
-                title: 'Задание ТСД',
+                title: 'ONEGA Задание ТСД',
                 text: `XML задание ${currentTaskNumber} (${scannedValues.length} позиций)`,
                 files: [file]
             });
             showStatus('📤 Данные отправлены через "Поделиться"', 'success');
             return true;
         } catch (err) {
-            console.error('Ошибка при попытке поделиться:', err);
+            console.error('Ошибка:', err);
             if (err.name !== 'AbortError') {
                 showStatus('❌ Не удалось открыть окно "Поделиться"', 'error');
             }
@@ -525,18 +605,15 @@
         }
         
         const xmlContent = generateXML();
-        const filename = `task_${currentTaskNumber.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.xml`;
+        const filename = `ONEGA_${currentTaskNumber.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.xml`;
         
-        // Логируем в консоль для отладки
-        console.log('=== XML для отправки ===');
+        console.log('=== ONEGA XML ===');
         console.log(xmlContent);
         
-        // Планшет: спрашиваем пользователя
         if (device.isTablet) {
             const userChoice = confirm(
-                `📟 Планшетный режим\n\n` +
-                `Задание "${currentTaskNumber}" (${scannedValues.length} позиций)\n\n` +
-                `✅ "OK" — Поделиться (через приложения)\n` +
+                `ONEGA ТСД\n\nЗадание "${currentTaskNumber}" (${scannedValues.length} позиций)\n\n` +
+                `✅ "OK" — Поделиться\n` +
                 `❌ "Отмена" — Сохранить как файл`
             );
             
@@ -548,18 +625,15 @@
                 return true;
             }
         }
-        // Телефон: Web Share API
         else if (device.isMobilePhone) {
             if (navigator.share) {
                 return await shareFile(xmlContent, filename);
             } else {
-                // Fallback для старых телефонов
-                showStatus('⚠️ Ваш браузер не поддерживает функцию "Поделиться"', 'error');
-                console.log('Скопируйте XML:', xmlContent);
+                showStatus('⚠️ Ваш браузер не поддерживает "Поделиться"', 'error');
+                console.log('XML:', xmlContent);
                 return false;
             }
         }
-        // ПК: сохраняем в файл
         else {
             saveToFile(xmlContent, filename);
             showStatus(`💾 Файл ${filename} сохранен`, 'success');
@@ -567,23 +641,20 @@
         }
     }
     
-    // Завершение задания
     async function finishTask() {
         const success = await exportTask();
         
         if (success) {
-            // Возвращаемся на стартовый экран
             stopCamera();
             currentTaskNumber = null;
             scannedValues = [];
             startScreen.style.display = 'block';
             mainScreen.style.display = 'none';
             taskNumberInput.value = '';
-            showStatus('🏁 Задание завершено и экспортировано', 'success');
+            showStatus('🏁 Задание завершено', 'success');
         }
     }
     
-    // ==================== КАМЕРА И QR-СКАНЕР ====================
     async function startCamera() {
         if (scanningActive) return;
         try {
@@ -646,7 +717,6 @@
         scanFrameId = requestAnimationFrame(scanFrame);
     }
     
-    // ==================== НАЧАЛО / ЗАКРЫТИЕ ЗАДАНИЯ ====================
     function startTask() {
         const taskNum = taskNumberInput.value.trim();
         if (!taskNum) {
@@ -677,11 +747,11 @@
             manualInputValue.focus();
         }
         
-        showStatus(`✅ Задание "${currentTaskNumber}" начато. Способ ввода: ${currentInputMethod === 'camera' ? 'Камера' : 'Ручной'}`, 'success');
+        showStatus(`✅ Задание "${currentTaskNumber}" начато`, 'success');
     }
     
     function closeTask() {
-        if (confirm('Закрыть задание? Все неотправленные данные будут потеряны.')) {
+        if (confirm('Закрыть задание? Все данные будут потеряны.')) {
             stopCamera();
             currentTaskNumber = null;
             scannedValues = [];
@@ -692,7 +762,6 @@
         }
     }
     
-    // ==================== ОБРАБОТЧИКИ КНОПОК ====================
     addBtn.addEventListener('click', () => {
         if (!currentTaskNumber) {
             showStatus('❌ Нет активного задания', 'error');

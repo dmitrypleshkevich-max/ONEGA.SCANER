@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ТСД Сканер Пак-Листов</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            margin: 0;
+            padding: 16px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        /* Карточки */
+        .card {
+            background: #1e293b;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #e2e8f0;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 4px solid #3b82f6;
+            padding-left: 12px;
+        }
+        /* Поля ввода */
+        .input-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+        input, select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #f1f5f9;
+            font-size: 1rem;
+        }
+        /* Кнопки */
+        .btn {
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        .btn-secondary {
+            background: #475569;
+            color: white;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+        .flex {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        /* Сканер */
+        .scanner-box {
+            background: #020617;
+            border-radius: 20px;
+            padding: 12px;
+            margin: 16px 0;
+        }
+        video {
+            width: 100%;
+            border-radius: 16px;
+            background: #000;
+        }
+        /* Список сканов - светлый текст на темном фоне */
+        .scan-list {
+            max-height: 320px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+        .scan-item {
+            background: #0f172a;
+            margin: 8px 0;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            border-left: 3px solid #10b981;
+            color: #f1f5f9;  /* Светлый текст */
+            word-break: break-all;
+        }
+        .scan-number {
+            background: #3b82f6;
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-right: 10px;
+            display: inline-block;
+            color: white;
+        }
+        .counter {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #3b82f6;
+            text-align: center;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 16px;
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 12px;
+        }
+        .status-info {
+            background: #1e293b;
+            color: #94a3b8;
+        }
+        .status-success {
+            background: #14532d;
+            color: #bbf7d0;
+        }
+        .status-error {
+            background: #7f1a1a;
+            color: #fecaca;
+        }
+        hr {
+            border-color: #334155;
+            margin: 16px 0;
+        }
+        .device-info {
+            font-size: 0.7rem;
+            color: #64748b;
+            text-align: center;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- ШАГ 1: НАЧАЛЬНЫЙ ЭКРАН (выбор задания) -->
+    <div id="startScreen" class="card">
+        <div class="card-title">📋 Новое задание</div>
+        <div class="input-group">
+            <label>🔢 Номер задания / заказа</label>
+            <input type="text" id="taskNumberInput" placeholder="например: ЗАКАЗ-12345 или ПАК-001" autocomplete="off">
+        </div>
+        <div class="input-group">
+            <label>📷 Способ ввода</label>
+            <select id="inputMethodSelect">
+                <option value="camera">Камера (QR-код)</option>
+                <option value="manual">Ручной ввод (текстовое поле)</option>
+            </select>
+        </div>
+        <button class="btn btn-primary" id="startTaskBtn" style="width: 100%;">▶️ Начать задание</button>
+    </div>
+
+    <!-- ШАГ 2: ОСНОВНОЙ ИНТЕРФЕЙС (скрыт сначала) -->
+    <div id="mainScreen" style="display: none;">
+        <!-- Инфо о задании -->
+        <div class="card">
+            <div class="flex-between">
+                <div>
+                    <div style="font-size: 0.75rem; color:#94a3b8;">Текущее задание</div>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #e2e8f0;" id="currentTaskDisplay">—</div>
+                </div>
+                <button class="btn btn-secondary" id="closeTaskBtn" style="padding: 8px 16px;">🏠 Закрыть задание</button>
+            </div>
+        </div>
+
+        <!-- Счетчик -->
+        <div class="card">
+            <div class="card-title">📊 Счетчик значений</div>
+            <div class="counter" id="counterValue">0</div>
+            <div style="text-align: center; font-size: 0.8rem; color:#94a3b8;">отсканировано в задании</div>
+        </div>
+
+        <!-- Область сканирования / ввода -->
+        <div class="card">
+            <div class="card-title">🎯 Добавить / Исключить</div>
+            
+            <!-- Блок для камеры -->
+            <div id="cameraBlock">
+                <div class="scanner-box">
+                    <video id="video" autoplay playsinline muted></video>
+                    <div class="flex" style="margin-top: 12px;">
+                        <button id="startCameraBtn" class="btn btn-primary" style="flex:1;">📷 Включить камеру</button>
+                        <button id="stopCameraBtn" class="btn btn-secondary" style="flex:1;">⏹️ Выключить</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Блок для ручного ввода -->
+            <div id="manualBlock" style="display: none;">
+                <div class="input-group">
+                    <label>✏️ Введите значение вручную</label>
+                    <input type="text" id="manualInputValue" placeholder="например: PK1234567890" autocomplete="off">
+                </div>
+            </div>
+
+            <!-- Кнопки действий -->
+            <div class="flex" style="margin-top: 16px;">
+                <button id="addBtn" class="btn btn-success" style="flex:1;">➕ ДОБАВИТЬ</button>
+                <button id="removeBtn" class="btn btn-danger" style="flex:1;">➖ ИСКЛЮЧИТЬ</button>
+            </div>
+            <div style="font-size: 0.7rem; color:#64748b; text-align: center; margin-top: 8px;">
+                Добавить = +1 к счетчику | Исключить = -1 (если значение есть в списке)
+            </div>
+        </div>
+
+        <!-- Список отсканированных значений -->
+        <div class="card">
+            <div class="flex-between">
+                <div class="card-title" style="margin-bottom: 0;">📦 Список значений</div>
+                <button id="clearAllBtn" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.7rem;">🗑️ Очистить всё</button>
+            </div>
+            <div id="scanListContainer" class="scan-list">
+                <div style="text-align:center; padding: 30px; color:#64748b;">— пока нет значений —</div>
+            </div>
+        </div>
+
+        <!-- Завершение задания -->
+        <div class="card">
+            <div class="card-title">🏁 Завершить задание</div>
+            <button id="finishTaskBtn" class="btn btn-primary" style="width: 100%;">✅ Завершить задание</button>
+            <div class="device-info" id="deviceInfo"></div>
+        </div>
+    </div>
+
+    <div id="globalStatus" class="status status-info">⚡ Готов к работе</div>
+</div>
+
+<script>
+    // ==================== ОПРЕДЕЛЕНИЕ ТИПА УСТРОЙСТВА ====================
+    function getDeviceType() {
+        const ua = navigator.userAgent;
+        const isIOS = /iPhone|iPad|iPod/i.test(ua);
+        const isAndroid = /Android/i.test(ua);
+        const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const isIPadWithMacUA = /Macintosh/i.test(ua) && isTouch && !window.MSStream;
+        
+        // Определяем планшет
+        const isTablet = (isAndroid && !/Mobile/i.test(ua)) ||  // Android без Mobile в UA
+                         (isIOS && /iPad/i.test(ua)) ||          // Старый iPad
+                         isIPadWithMacUA;                         // Новый iPad
+        
+        const isMobilePhone = (isAndroid && /Mobile/i.test(ua)) || /iPhone/i.test(ua);
+        
+        return {
+            isTablet: isTablet,
+            isMobilePhone: isMobilePhone,
+            isDesktop: !isTablet && !isMobilePhone,
+            hasTouchScreen: isTouch,
+            isAndroid: isAndroid,
+            isIOS: isIOS
+        };
+    }
+    
+    const device = getDeviceType();
+    
+    // ==================== ГЛОБАЛЬНОЕ СОСТОЯНИЕ ====================
+    let currentTaskNumber = null;          // номер задания
+    let scannedValues = [];                // массив строк (уникальные)
+    let currentInputMethod = 'camera';     // camera / manual
+    
+    // Для камеры
+    let videoStream = null;
+    let scanningActive = false;
+    let scanFrameId = null;
+    const videoEl = document.getElementById('video');
+    
+    // DOM элементы
+    const startScreen = document.getElementById('startScreen');
+    const mainScreen = document.getElementById('mainScreen');
+    const taskNumberInput = document.getElementById('taskNumberInput');
+    const inputMethodSelect = document.getElementById('inputMethodSelect');
+    const startTaskBtn = document.getElementById('startTaskBtn');
+    const closeTaskBtn = document.getElementById('closeTaskBtn');
+    const finishTaskBtn = document.getElementById('finishTaskBtn');
+    const currentTaskDisplay = document.getElementById('currentTaskDisplay');
+    const counterValue = document.getElementById('counterValue');
+    const addBtn = document.getElementById('addBtn');
+    const removeBtn = document.getElementById('removeBtn');
+    const manualInputValue = document.getElementById('manualInputValue');
+    const cameraBlock = document.getElementById('cameraBlock');
+    const manualBlock = document.getElementById('manualBlock');
+    const startCameraBtn = document.getElementById('startCameraBtn');
+    const stopCameraBtn = document.getElementById('stopCameraBtn');
+    const scanListContainer = document.getElementById('scanListContainer');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const globalStatus = document.getElementById('globalStatus');
+    const deviceInfo = document.getElementById('deviceInfo');
+    
+    // Показываем тип устройства в интерфейсе
+    if (deviceInfo) {
+        if (device.isDesktop) {
+            deviceInfo.textContent = '💻 Режим ПК: при завершении задания файл сохранится на диск';
+        } else if (device.isMobilePhone) {
+            deviceInfo.textContent = '📱 Режим телефона: при завершении откроется окно "Поделиться"';
+        } else if (device.isTablet) {
+            deviceInfo.textContent = '📟 Режим планшета: при завершении вы сможете выбрать действие';
+        }
+    }
+    
+    // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+    function showStatus(msg, type = 'info') {
+        globalStatus.textContent = msg;
+        globalStatus.className = `status status-${type}`;
+        setTimeout(() => {
+            if (globalStatus.textContent === msg) {
+                globalStatus.className = 'status status-info';
+                globalStatus.textContent = '✅ Готово';
+            }
+        }, 3000);
+    }
+    
+    function updateCounterAndList() {
+        // Обновляем счетчик
+        counterValue.textContent = scannedValues.length;
+        
+        // Обновляем список
+        if (scannedValues.length === 0) {
+            scanListContainer.innerHTML = '<div style="text-align:center; padding: 30px; color:#64748b;">— пока нет значений —</div>';
+            return;
+        }
+        
+        let html = '';
+        scannedValues.forEach((value, index) => {
+            html += `
+                <div class="scan-item">
+                    <span class="scan-number">${index + 1}</span>
+                    <span style="word-break: break-all;">${escapeHtml(value)}</span>
+                </div>
+            `;
+        });
+        scanListContainer.innerHTML = html;
+    }
+    
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    function escapeXml(str) {
+        return str.replace(/[<>&]/g, function(m) {
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            if (m === '&') return '&amp;';
+            return m;
+        });
+    }
+    
+    // Проверка уникальности
+    function isValueUnique(value) {
+        return !scannedValues.includes(value);
+    }
+    
+    // Добавить значение (с проверкой уникальности)
+    function addValue(value) {
+        if (!value || value.trim() === '') {
+            showStatus('❌ Нельзя добавить пустое значение', 'error');
+            return false;
+        }
+        value = value.trim();
+        
+        if (!isValueUnique(value)) {
+            showStatus(`⚠️ Значение "${value}" уже внесено`, 'error');
+            return false;
+        }
+        
+        scannedValues.push(value);
+        updateCounterAndList();
+        showStatus(`✅ Добавлено: ${value} (всего: ${scannedValues.length})`, 'success');
+        if (navigator.vibrate) navigator.vibrate(50);
+        return true;
+    }
+    
+    // Исключить значение (с проверкой существования)
+    function removeValue(value) {
+        if (!value || value.trim() === '') {
+            showStatus('❌ Введите значение для исключения', 'error');
+            return false;
+        }
+        value = value.trim();
+        const index = scannedValues.indexOf(value);
+        
+        if (index === -1) {
+            showStatus(`❌ Значение "${value}" не найдено`, 'error');
+            return false;
+        }
+        
+        scannedValues.splice(index, 1);
+        updateCounterAndList();
+        showStatus(`🗑️ Исключено: ${value} (осталось: ${scannedValues.length})`, 'success');
+        if (navigator.vibrate) navigator.vibrate(50);
+        return true;
+    }
+    
+    // Получить текущее значение для добавления/удаления
+    let lastScannedValue = null; // последний успешно распознанный QR
+    
+    function getCurrentInputValue() {
+        if (currentInputMethod === 'camera') {
+            if (lastScannedValue) {
+                return lastScannedValue;
+            } else {
+                showStatus('📷 Сначала отсканируйте QR-код камерой', 'error');
+                return null;
+            }
+        } else {
+            return manualInputValue.value.trim();
+        }
+    }
+    
+    // ==================== ГЕНЕРАЦИЯ XML ====================
+    function generateXML() {
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xml += '<task>\n';
+        xml += `  <taskNumber>${escapeXml(currentTaskNumber)}</taskNumber>\n`;
+        xml += `  <timestamp>${new Date().toISOString()}</timestamp>\n`;
+        xml += `  <totalCount>${scannedValues.length}</totalCount>\n`;
+        xml += '  <items>\n';
+        scannedValues.forEach(value => {
+            xml += `    <item>${escapeXml(value)}</item>\n`;
+        });
+        xml += '  </items>\n';
+        xml += '</task>';
+        return xml;
+    }
+    
+    // ==================== ЭКСПОРТ В ЗАВИСИМОСТИ ОТ УСТРОЙСТВА ====================
+    function saveToFile(content, filename) {
+        const blob = new Blob([content], {type: 'application/xml;charset=utf-8'});
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+    
+    async function shareFile(content, filename) {
+        const blob = new Blob([content], {type: 'application/xml'});
+        const file = new File([blob], filename, {type: 'application/xml'});
+        
+        try {
+            await navigator.share({
+                title: 'Задание ТСД',
+                text: `XML задание ${currentTaskNumber} (${scannedValues.length} позиций)`,
+                files: [file]
+            });
+            showStatus('📤 Данные отправлены через "Поделиться"', 'success');
+            return true;
+        } catch (err) {
+            console.error('Ошибка при попытке поделиться:', err);
+            if (err.name !== 'AbortError') {
+                showStatus('❌ Не удалось открыть окно "Поделиться"', 'error');
+            }
+            return false;
+        }
+    }
+    
+    async function exportTask() {
+        if (!currentTaskNumber) {
+            showStatus('❌ Нет активного задания', 'error');
+            return false;
+        }
+        
+        if (scannedValues.length === 0) {
+            showStatus('⚠️ Нет отсканированных значений. Задание пустое.', 'error');
+            return false;
+        }
+        
+        const xmlContent = generateXML();
+        const filename = `task_${currentTaskNumber.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.xml`;
+        
+        // Логируем в консоль для отладки
+        console.log('=== XML для отправки ===');
+        console.log(xmlContent);
+        
+        // Планшет: спрашиваем пользователя
+        if (device.isTablet) {
+            const userChoice = confirm(
+                `📟 Планшетный режим\n\n` +
+                `Задание "${currentTaskNumber}" (${scannedValues.length} позиций)\n\n` +
+                `✅ "OK" — Поделиться (через приложения)\n` +
+                `❌ "Отмена" — Сохранить как файл`
+            );
+            
+            if (userChoice) {
+                return await shareFile(xmlContent, filename);
+            } else {
+                saveToFile(xmlContent, filename);
+                showStatus(`💾 Файл ${filename} сохранен`, 'success');
+                return true;
+            }
+        }
+        // Телефон: Web Share API
+        else if (device.isMobilePhone) {
+            if (navigator.share) {
+                return await shareFile(xmlContent, filename);
+            } else {
+                // Fallback для старых телефонов
+                showStatus('⚠️ Ваш браузер не поддерживает функцию "Поделиться"', 'error');
+                console.log('Скопируйте XML:', xmlContent);
+                return false;
+            }
+        }
+        // ПК: сохраняем в файл
+        else {
+            saveToFile(xmlContent, filename);
+            showStatus(`💾 Файл ${filename} сохранен`, 'success');
+            return true;
+        }
+    }
+    
+    // Завершение задания
+    async function finishTask() {
+        const success = await exportTask();
+        
+        if (success) {
+            // Возвращаемся на стартовый экран
+            stopCamera();
+            currentTaskNumber = null;
+            scannedValues = [];
+            startScreen.style.display = 'block';
+            mainScreen.style.display = 'none';
+            taskNumberInput.value = '';
+            showStatus('🏁 Задание завершено и экспортировано', 'success');
+        }
+    }
+    
+    // ==================== КАМЕРА И QR-СКАНЕР ====================
+    async function startCamera() {
+        if (scanningActive) return;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            videoStream = stream;
+            videoEl.srcObject = stream;
+            await videoEl.play();
+            scanningActive = true;
+            showStatus('📷 Камера активна, наведите на QR-код', 'success');
+            loadQrScanner();
+        } catch(err) {
+            showStatus('❌ Нет доступа к камере: ' + err.message, 'error');
+        }
+    }
+    
+    function stopCamera() {
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+        }
+        videoEl.srcObject = null;
+        scanningActive = false;
+        if (scanFrameId) cancelAnimationFrame(scanFrameId);
+        showStatus('⏹️ Камера выключена', 'info');
+    }
+    
+    function loadQrScanner() {
+        if (window.jsQR) {
+            startQrScanLoop();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+        script.onload = () => startQrScanLoop();
+        document.head.appendChild(script);
+    }
+    
+    function startQrScanLoop() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        function scanFrame() {
+            if (!scanningActive || !videoEl.videoWidth) {
+                scanFrameId = requestAnimationFrame(scanFrame);
+                return;
+            }
+            canvas.width = videoEl.videoWidth;
+            canvas.height = videoEl.videoHeight;
+            ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" });
+            if (code && code.data) {
+                lastScannedValue = code.data;
+                showStatus(`🔍 Распознано: ${lastScannedValue} (нажмите ДОБАВИТЬ или ИСКЛЮЧИТЬ)`, 'success');
+                if (navigator.vibrate) navigator.vibrate(80);
+            }
+            scanFrameId = requestAnimationFrame(scanFrame);
+        }
+        if (scanFrameId) cancelAnimationFrame(scanFrameId);
+        scanFrameId = requestAnimationFrame(scanFrame);
+    }
+    
+    // ==================== НАЧАЛО / ЗАКРЫТИЕ ЗАДАНИЯ ====================
+    function startTask() {
+        const taskNum = taskNumberInput.value.trim();
+        if (!taskNum) {
+            showStatus('❌ Введите номер задания', 'error');
+            return;
+        }
+        
+        currentTaskNumber = taskNum;
+        currentInputMethod = inputMethodSelect.value;
+        scannedValues = [];
+        lastScannedValue = null;
+        
+        currentTaskDisplay.textContent = currentTaskNumber;
+        updateCounterAndList();
+        
+        startScreen.style.display = 'none';
+        mainScreen.style.display = 'block';
+        
+        if (currentInputMethod === 'camera') {
+            cameraBlock.style.display = 'block';
+            manualBlock.style.display = 'none';
+            startCamera();
+        } else {
+            cameraBlock.style.display = 'none';
+            manualBlock.style.display = 'block';
+            stopCamera();
+            manualInputValue.value = '';
+            manualInputValue.focus();
+        }
+        
+        showStatus(`✅ Задание "${currentTaskNumber}" начато. Способ ввода: ${currentInputMethod === 'camera' ? 'Камера' : 'Ручной'}`, 'success');
+    }
+    
+    function closeTask() {
+        if (confirm('Закрыть задание? Все неотправленные данные будут потеряны.')) {
+            stopCamera();
+            currentTaskNumber = null;
+            scannedValues = [];
+            startScreen.style.display = 'block';
+            mainScreen.style.display = 'none';
+            taskNumberInput.value = '';
+            showStatus('🏠 Задание закрыто', 'info');
+        }
+    }
+    
+    // ==================== ОБРАБОТЧИКИ КНОПОК ====================
+    addBtn.addEventListener('click', () => {
+        if (!currentTaskNumber) {
+            showStatus('❌ Нет активного задания', 'error');
+            return;
+        }
+        let value = null;
+        if (currentInputMethod === 'camera') {
+            value = lastScannedValue;
+            if (value) {
+                if (addValue(value)) {
+                    lastScannedValue = null;
+                }
+            } else {
+                showStatus('📷 Сначала отсканируйте QR-код', 'error');
+            }
+        } else {
+            value = manualInputValue.value.trim();
+            if (addValue(value)) {
+                manualInputValue.value = '';
+                manualInputValue.focus();
+            }
+        }
+    });
+    
+    removeBtn.addEventListener('click', () => {
+        if (!currentTaskNumber) {
+            showStatus('❌ Нет активного задания', 'error');
+            return;
+        }
+        let value = null;
+        if (currentInputMethod === 'camera') {
+            value = lastScannedValue;
+            if (value) {
+                removeValue(value);
+                lastScannedValue = null;
+            } else {
+                showStatus('📷 Сначала отсканируйте QR-код для исключения', 'error');
+            }
+        } else {
+            value = manualInputValue.value.trim();
+            if (removeValue(value)) {
+                manualInputValue.value = '';
+                manualInputValue.focus();
+            }
+        }
+    });
+    
+    startCameraBtn.addEventListener('click', startCamera);
+    stopCameraBtn.addEventListener('click', stopCamera);
+    clearAllBtn.addEventListener('click', () => {
+        if (confirm(`Очистить все ${scannedValues.length} значений?`)) {
+            scannedValues = [];
+            updateCounterAndList();
+            showStatus('🗑️ Все значения удалены', 'success');
+        }
+    });
+    
+    finishTaskBtn.addEventListener('click', finishTask);
+    startTaskBtn.addEventListener('click', startTask);
+    closeTaskBtn.addEventListener('click', closeTask);
+    
+    manualInputValue.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addBtn.click();
+        }
+    });
+    
+    updateCounterAndList();
+    showStatus('Введите номер задания и начните', 'info');
+</script>
+</body>
+</html>

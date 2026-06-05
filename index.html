@@ -24,9 +24,6 @@
         }
         
         /* ========== КОРПОРАТИВНЫЕ ЦВЕТА ========== */
-        /* Красный: #C62828 | Тёмно-красный: #B71C1C | Белый: #FFFFFF | Серый: #757575 */
-        
-        /* Карточки */
         .card {
             background: #FFFFFF;
             border-radius: 16px;
@@ -48,7 +45,6 @@
             padding-left: 12px;
         }
         
-        /* Поля ввода */
         .input-group {
             margin-bottom: 16px;
         }
@@ -78,16 +74,16 @@
             box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.1);
         }
         
-        /* Кнопки */
         .btn {
-            padding: 12px 20px;
+            padding: 14px 20px;
             border-radius: 40px;
             font-weight: 700;
-            font-size: 0.95rem;
+            font-size: 1rem;
             border: none;
             cursor: pointer;
             transition: all 0.2s;
             text-align: center;
+            min-height: 52px;
         }
         
         .btn:active {
@@ -107,11 +103,6 @@
         .btn-success {
             background: #C62828;
             color: white;
-            box-shadow: 0 2px 4px rgba(198, 40, 40, 0.3);
-        }
-        
-        .btn-success:hover {
-            background: #B71C1C;
         }
         
         .btn-danger {
@@ -120,27 +111,15 @@
             color: #C62828;
         }
         
-        .btn-danger:hover {
-            background: #FFF5F5;
-        }
-        
         .btn-secondary {
             background: #757575;
             color: white;
-        }
-        
-        .btn-secondary:hover {
-            background: #616161;
         }
         
         .btn-outline {
             background: transparent;
             border: 1px solid #C62828;
             color: #C62828;
-        }
-        
-        .btn-outline:hover {
-            background: #FFF5F5;
         }
         
         .flex {
@@ -155,7 +134,6 @@
             align-items: center;
         }
         
-        /* Сканер */
         .scanner-box {
             background: #fafafa;
             border-radius: 16px;
@@ -170,9 +148,8 @@
             background: #000;
         }
         
-        /* Список сканов — белый фон, чёрный текст */
         .scan-list {
-            max-height: 320px;
+            max-height: 280px;
             overflow-y: auto;
             margin-top: 12px;
         }
@@ -188,7 +165,6 @@
             color: #333333;
             word-break: break-all;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            border-bottom: 1px solid #f0f0f0;
         }
         
         .scan-number {
@@ -209,35 +185,6 @@
             text-align: center;
         }
         
-        /* Статусы */
-        .status {
-            padding: 10px;
-            border-radius: 12px;
-            text-align: center;
-            font-size: 0.85rem;
-            margin-top: 12px;
-        }
-        
-        .status-info {
-            background: #f0f0f0;
-            color: #333333;
-        }
-        
-        .status-success {
-            background: #E8F5E9;
-            color: #2E7D32;
-        }
-        
-        .status-error {
-            background: #FFEBEE;
-            color: #C62828;
-        }
-        
-        hr {
-            border-color: #e0e0e0;
-            margin: 16px 0;
-        }
-        
         .device-info {
             font-size: 0.7rem;
             color: #757575;
@@ -245,7 +192,6 @@
             margin-top: 12px;
         }
         
-        /* Шапка с логотипом */
         .header {
             text-align: center;
             margin-bottom: 20px;
@@ -264,40 +210,90 @@
             margin-top: 4px;
         }
         
-        /* Адаптация для ТСД */
-        button {
-            min-height: 48px;
+        /* ========== TOAST-УВЕДОМЛЕНИЯ (центр экрана) ========== */
+        .toast-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            pointer-events: none;
+        }
+        
+        .toast {
+            background: #1e293b;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: fadeInOut 2s ease forwards;
+            white-space: nowrap;
+            max-width: 90vw;
+            white-space: normal;
+            word-break: break-word;
+        }
+        
+        .toast.success {
+            background: #C62828;
+            color: white;
+        }
+        
+        .toast.error {
+            background: #B71C1C;
+            color: white;
+        }
+        
+        .toast.info {
+            background: #757575;
+            color: white;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: scale(0.9); }
+            15% { opacity: 1; transform: scale(1); }
+            85% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.9); }
+        }
+        
+        /* Активный режим сканирования */
+        .action-mode {
+            background: #C62828;
+            color: white;
+            padding: 10px;
+            border-radius: 16px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            transform: none;
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <!-- ШАПКА С ЛОГОТИПОМ -->
     <div class="header">
         <div class="logo">ONEGA</div>
         <div class="logo-sub">Логистика · Сканер ТСД</div>
     </div>
 
-    <!-- ШАГ 1: НАЧАЛЬНЫЙ ЭКРАН (выбор задания) -->
+    <!-- СТАРТОВЫЙ ЭКРАН -->
     <div id="startScreen" class="card">
         <div class="card-title">📋 Новое задание</div>
         <div class="input-group">
             <label>🔢 Номер задания / заказа</label>
-            <input type="text" id="taskNumberInput" placeholder="например: ЗАКАЗ-12345 или ON-001" autocomplete="off">
-        </div>
-        <div class="input-group">
-            <label>📷 Способ ввода</label>
-            <select id="inputMethodSelect">
-                <option value="camera">Камера (QR-код)</option>
-                <option value="manual">Ручной ввод (текстовое поле)</option>
-            </select>
+            <input type="text" id="taskNumberInput" placeholder="например: ON-001" autocomplete="off">
         </div>
         <button class="btn btn-primary" id="startTaskBtn" style="width: 100%;">▶️ Начать задание</button>
     </div>
 
-    <!-- ШАГ 2: ОСНОВНОЙ ИНТЕРФЕЙС (скрыт сначала) -->
+    <!-- ОСНОВНОЙ ЭКРАН -->
     <div id="mainScreen" style="display: none;">
-        <!-- Инфо о задании -->
         <div class="card">
             <div class="flex-between">
                 <div>
@@ -308,47 +304,37 @@
             </div>
         </div>
 
-        <!-- Счетчик -->
         <div class="card">
             <div class="card-title">📊 Счетчик</div>
             <div class="counter" id="counterValue">0</div>
             <div style="text-align: center; font-size: 0.8rem; color:#757575;">отсканировано в задании</div>
         </div>
 
-        <!-- Область сканирования / ввода -->
+        <!-- Режим работы -->
         <div class="card">
-            <div class="card-title">🎯 Добавить / Исключить</div>
-            
-            <!-- Блок для камеры -->
-            <div id="cameraBlock">
-                <div class="scanner-box">
-                    <video id="video" autoplay playsinline muted></video>
-                    <div class="flex" style="margin-top: 12px;">
-                        <button id="startCameraBtn" class="btn btn-primary" style="flex:1;">📷 Включить камеру</button>
-                        <button id="stopCameraBtn" class="btn btn-secondary" style="flex:1;">⏹️ Выключить</button>
-                    </div>
-                </div>
+            <div class="card-title">🎯 Действие</div>
+            <div class="flex">
+                <button id="setAddModeBtn" class="btn btn-success" style="flex:1;">➕ ДОБАВИТЬ</button>
+                <button id="setRemoveModeBtn" class="btn btn-danger" style="flex:1;">➖ ИСКЛЮЧИТЬ</button>
             </div>
-
-            <!-- Блок для ручного ввода -->
-            <div id="manualBlock" style="display: none;">
-                <div class="input-group">
-                    <label>✏️ Введите значение вручную</label>
-                    <input type="text" id="manualInputValue" placeholder="например: PK1234567890" autocomplete="off">
-                </div>
-            </div>
-
-            <!-- Кнопки действий -->
-            <div class="flex" style="margin-top: 16px;">
-                <button id="addBtn" class="btn btn-success" style="flex:1;">➕ ДОБАВИТЬ</button>
-                <button id="removeBtn" class="btn btn-danger" style="flex:1;">➖ ИСКЛЮЧИТЬ</button>
-            </div>
-            <div style="font-size: 0.7rem; color:#757575; text-align: center; margin-top: 8px;">
-                Добавить = +1 к счетчику | Исключить = -1 (если значение есть в списке)
+            <div id="actionModeDisplay" class="action-mode" style="margin-top: 12px; background: #e0e0e0; color: #333;">
+                ⚡ Выберите действие
             </div>
         </div>
 
-        <!-- Список отсканированных значений -->
+        <!-- Сканер -->
+        <div class="card">
+            <div class="card-title">📷 Сканирование</div>
+            <div class="scanner-box">
+                <video id="video" autoplay playsinline muted></video>
+                <div class="flex" style="margin-top: 12px;">
+                    <button id="startCameraBtn" class="btn btn-primary" style="flex:1;">📷 Включить камеру</button>
+                    <button id="stopCameraBtn" class="btn btn-secondary" style="flex:1;">⏹️ Выключить</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Список значений -->
         <div class="card">
             <div class="flex-between">
                 <div class="card-title" style="margin-bottom: 0;">📦 Список значений</div>
@@ -359,204 +345,251 @@
             </div>
         </div>
 
-        <!-- Завершение задания -->
+        <!-- Завершение -->
         <div class="card">
             <div class="card-title">🏁 Завершить задание</div>
             <button id="finishTaskBtn" class="btn btn-primary" style="width: 100%;">✅ Завершить задание</button>
             <div class="device-info" id="deviceInfo"></div>
         </div>
     </div>
-
-    <div id="globalStatus" class="status status-info">⚡ ONEGA ТСД Сканер готов</div>
 </div>
 
+<!-- КОНТЕЙНЕР ДЛЯ TOAST-ОВ -->
+<div id="toastContainer" class="toast-container"></div>
+
 <script>
-    // ==================== ОПРЕДЕЛЕНИЕ ТИПА УСТРОЙСТВА ====================
+    // ========== TOAST-УВЕДОМЛЕНИЯ ==========
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.remove();
+        }, 2000);
+        if (navigator.vibrate) navigator.vibrate(50);
+    }
+
+    // ========== ОПРЕДЕЛЕНИЕ УСТРОЙСТВА ==========
     function getDeviceType() {
         const ua = navigator.userAgent;
         const isIOS = /iPhone|iPad|iPod/i.test(ua);
         const isAndroid = /Android/i.test(ua);
         const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         const isIPadWithMacUA = /Macintosh/i.test(ua) && isTouch && !window.MSStream;
-        
         const isTablet = (isAndroid && !/Mobile/i.test(ua)) ||
                          (isIOS && /iPad/i.test(ua)) ||
                          isIPadWithMacUA;
-        
         const isMobilePhone = (isAndroid && /Mobile/i.test(ua)) || /iPhone/i.test(ua);
-        
-        return {
-            isTablet: isTablet,
-            isMobilePhone: isMobilePhone,
-            isDesktop: !isTablet && !isMobilePhone,
-            hasTouchScreen: isTouch,
-            isAndroid: isAndroid,
-            isIOS: isIOS
-        };
+        return { isTablet, isMobilePhone, isDesktop: !isTablet && !isMobilePhone };
     }
     
     const device = getDeviceType();
     
-    // ==================== ГЛОБАЛЬНОЕ СОСТОЯНИЕ ====================
+    // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
     let currentTaskNumber = null;
     let scannedValues = [];
-    let currentInputMethod = 'camera';
-    
+    let currentAction = null;      // 'add' или 'remove'
     let videoStream = null;
     let scanningActive = false;
     let scanFrameId = null;
-    const videoEl = document.getElementById('video');
+    let isProcessingScan = false;   // Блокировка повторных сканов
     
+    const videoEl = document.getElementById('video');
     const startScreen = document.getElementById('startScreen');
     const mainScreen = document.getElementById('mainScreen');
     const taskNumberInput = document.getElementById('taskNumberInput');
-    const inputMethodSelect = document.getElementById('inputMethodSelect');
     const startTaskBtn = document.getElementById('startTaskBtn');
     const closeTaskBtn = document.getElementById('closeTaskBtn');
     const finishTaskBtn = document.getElementById('finishTaskBtn');
     const currentTaskDisplay = document.getElementById('currentTaskDisplay');
     const counterValue = document.getElementById('counterValue');
-    const addBtn = document.getElementById('addBtn');
-    const removeBtn = document.getElementById('removeBtn');
-    const manualInputValue = document.getElementById('manualInputValue');
-    const cameraBlock = document.getElementById('cameraBlock');
-    const manualBlock = document.getElementById('manualBlock');
+    const setAddModeBtn = document.getElementById('setAddModeBtn');
+    const setRemoveModeBtn = document.getElementById('setRemoveModeBtn');
+    const actionModeDisplay = document.getElementById('actionModeDisplay');
     const startCameraBtn = document.getElementById('startCameraBtn');
     const stopCameraBtn = document.getElementById('stopCameraBtn');
     const scanListContainer = document.getElementById('scanListContainer');
     const clearAllBtn = document.getElementById('clearAllBtn');
-    const globalStatus = document.getElementById('globalStatus');
     const deviceInfo = document.getElementById('deviceInfo');
     
     if (deviceInfo) {
-        if (device.isDesktop) {
-            deviceInfo.textContent = '💻 ПК-режим: файл сохранится на диск';
-        } else if (device.isMobilePhone) {
-            deviceInfo.textContent = '📱 Телефон: откроется "Поделиться"';
-        } else if (device.isTablet) {
-            deviceInfo.textContent = '📟 Планшет: можно выбрать действие';
-        }
+        if (device.isDesktop) deviceInfo.textContent = '💻 ПК-режим: файл сохранится';
+        else if (device.isMobilePhone) deviceInfo.textContent = '📱 Телефон: "Поделиться"';
+        else deviceInfo.textContent = '📟 Планшет: выбор действия';
     }
     
-    function showStatus(msg, type = 'info') {
-        globalStatus.textContent = msg;
-        globalStatus.className = `status status-${type}`;
-        setTimeout(() => {
-            if (globalStatus.textContent === msg) {
-                globalStatus.className = 'status status-info';
-                globalStatus.textContent = '✅ ONEGA ТСД готов';
-            }
-        }, 3000);
-    }
-    
+    // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
     function updateCounterAndList() {
         counterValue.textContent = scannedValues.length;
-        
         if (scannedValues.length === 0) {
             scanListContainer.innerHTML = '<div style="text-align:center; padding: 30px; color:#757575;">— пока нет значений —</div>';
             return;
         }
-        
         let html = '';
         scannedValues.forEach((value, index) => {
-            html += `
-                <div class="scan-item">
-                    <span class="scan-number">${index + 1}</span>
-                    <span>${escapeHtml(value)}</span>
-                </div>
-            `;
+            html += `<div class="scan-item"><span class="scan-number">${index + 1}</span><span>${escapeHtml(value)}</span></div>`;
         });
         scanListContainer.innerHTML = html;
     }
     
     function escapeHtml(str) {
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
     }
     
     function escapeXml(str) {
-        return str.replace(/[<>&]/g, function(m) {
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            if (m === '&') return '&amp;';
-            return m;
-        });
+        return str.replace(/[<>&]/g, m => m === '<' ? '&lt;' : m === '>' ? '&gt;' : '&amp;');
     }
     
-    function isValueUnique(value) {
-        return !scannedValues.includes(value);
-    }
-    
+    // ========== ЛОГИКА ДОБАВЛЕНИЯ/УДАЛЕНИЯ ==========
     function addValue(value) {
         if (!value || value.trim() === '') {
-            showStatus('❌ Нельзя добавить пустое значение', 'error');
+            showToast('❌ Пустое значение', 'error');
             return false;
         }
         value = value.trim();
-        
-        if (!isValueUnique(value)) {
-            showStatus(`⚠️ Значение "${value}" уже внесено`, 'error');
+        if (scannedValues.includes(value)) {
+            showToast(`⚠️ "${value}" уже есть в списке`, 'error');
             return false;
         }
-        
         scannedValues.push(value);
         updateCounterAndList();
-        showStatus(`✅ Добавлено: ${value} (всего: ${scannedValues.length})`, 'success');
-        if (navigator.vibrate) navigator.vibrate(50);
+        showToast(`✅ Добавлено: ${value}`, 'success');
         return true;
     }
     
     function removeValue(value) {
         if (!value || value.trim() === '') {
-            showStatus('❌ Введите значение для исключения', 'error');
+            showToast('❌ Пустое значение', 'error');
             return false;
         }
         value = value.trim();
         const index = scannedValues.indexOf(value);
-        
         if (index === -1) {
-            showStatus(`❌ Значение "${value}" не найдено`, 'error');
+            showToast(`❌ "${value}" не найдено в списке`, 'error');
             return false;
         }
-        
         scannedValues.splice(index, 1);
         updateCounterAndList();
-        showStatus(`🗑️ Исключено: ${value} (осталось: ${scannedValues.length})`, 'success');
-        if (navigator.vibrate) navigator.vibrate(50);
+        showToast(`🗑️ Исключено: ${value}`, 'info');
         return true;
     }
     
-    let lastScannedValue = null;
+    // ========== ОБРАБОТКА СКАНИРОВАНИЯ (вызывается при обнаружении QR) ==========
+    function processScannedValue(value) {
+        if (isProcessingScan) return;
+        if (!currentAction) {
+            showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
+            return;
+        }
+        isProcessingScan = true;
+        
+        if (currentAction === 'add') {
+            addValue(value);
+        } else if (currentAction === 'remove') {
+            removeValue(value);
+        }
+        
+        // Небольшая задержка, чтобы не обрабатывать тот же QR повторно
+        setTimeout(() => {
+            isProcessingScan = false;
+        }, 500);
+    }
     
-    function getCurrentInputValue() {
-        if (currentInputMethod === 'camera') {
-            if (lastScannedValue) {
-                return lastScannedValue;
-            } else {
-                showStatus('📷 Сначала отсканируйте QR-код камерой', 'error');
-                return null;
-            }
-        } else {
-            return manualInputValue.value.trim();
+    // ========== ВЫБОР ДЕЙСТВИЯ ==========
+    function setAction(action) {
+        currentAction = action;
+        if (action === 'add') {
+            actionModeDisplay.innerHTML = '➕ РЕЖИМ: ДОБАВЛЕНИЕ — сканируйте QR для добавления';
+            actionModeDisplay.style.background = '#C62828';
+            actionModeDisplay.style.color = 'white';
+            showToast('Режим ДОБАВЛЕНИЯ активирован', 'info');
+        } else if (action === 'remove') {
+            actionModeDisplay.innerHTML = '➖ РЕЖИМ: ИСКЛЮЧЕНИЕ — сканируйте QR для удаления';
+            actionModeDisplay.style.background = '#B71C1C';
+            actionModeDisplay.style.color = 'white';
+            showToast('Режим ИСКЛЮЧЕНИЯ активирован', 'info');
         }
     }
     
+    setAddModeBtn.addEventListener('click', () => setAction('add'));
+    setRemoveModeBtn.addEventListener('click', () => setAction('remove'));
+    
+    // ========== КАМЕРА И QR ==========
+    async function startCamera() {
+        if (scanningActive) return;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            videoStream = stream;
+            videoEl.srcObject = stream;
+            await videoEl.play();
+            scanningActive = true;
+            showToast('📷 Камера включена', 'success');
+            loadQrScanner();
+        } catch(err) {
+            showToast('❌ Нет доступа к камере: ' + err.message, 'error');
+        }
+    }
+    
+    function stopCamera() {
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+        }
+        videoEl.srcObject = null;
+        scanningActive = false;
+        if (scanFrameId) cancelAnimationFrame(scanFrameId);
+        showToast('⏹️ Камера выключена', 'info');
+    }
+    
+    function loadQrScanner() {
+        if (window.jsQR) {
+            startQrScanLoop();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+        script.onload = () => startQrScanLoop();
+        document.head.appendChild(script);
+    }
+    
+    function startQrScanLoop() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        function scanFrame() {
+            if (!scanningActive || !videoEl.videoWidth) {
+                scanFrameId = requestAnimationFrame(scanFrame);
+                return;
+            }
+            canvas.width = videoEl.videoWidth;
+            canvas.height = videoEl.videoHeight;
+            ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" });
+            if (code && code.data && !isProcessingScan) {
+                const qrValue = code.data;
+                showToast(`🔍 Распознано: ${qrValue}`, 'info');
+                processScannedValue(qrValue);
+            }
+            scanFrameId = requestAnimationFrame(scanFrame);
+        }
+        if (scanFrameId) cancelAnimationFrame(scanFrameId);
+        scanFrameId = requestAnimationFrame(scanFrame);
+    }
+    
+    startCameraBtn.addEventListener('click', startCamera);
+    stopCameraBtn.addEventListener('click', stopCamera);
+    
+    // ========== ОСТАЛЬНОЙ ФУНКЦИОНАЛ ==========
     function generateXML() {
-        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-        xml += '<task>\n';
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<task>\n';
         xml += `  <taskNumber>${escapeXml(currentTaskNumber)}</taskNumber>\n`;
         xml += `  <timestamp>${new Date().toISOString()}</timestamp>\n`;
         xml += `  <totalCount>${scannedValues.length}</totalCount>\n`;
         xml += '  <items>\n';
-        scannedValues.forEach(value => {
-            xml += `    <item>${escapeXml(value)}</item>\n`;
-        });
-        xml += '  </items>\n';
-        xml += '</task>';
+        scannedValues.forEach(value => xml += `    <item>${escapeXml(value)}</item>\n`);
+        xml += '  </items>\n</task>';
         return xml;
     }
     
@@ -575,247 +608,87 @@
     async function shareFile(content, filename) {
         const blob = new Blob([content], {type: 'application/xml'});
         const file = new File([blob], filename, {type: 'application/xml'});
-        
         try {
-            await navigator.share({
-                title: 'ONEGA Задание ТСД',
-                text: `XML задание ${currentTaskNumber} (${scannedValues.length} позиций)`,
-                files: [file]
-            });
-            showStatus('📤 Данные отправлены через "Поделиться"', 'success');
+            await navigator.share({ title: 'ONEGA Задание', text: `${currentTaskNumber} (${scannedValues.length} позиций)`, files: [file] });
+            showToast('📤 Данные отправлены', 'success');
             return true;
         } catch (err) {
-            console.error('Ошибка:', err);
-            if (err.name !== 'AbortError') {
-                showStatus('❌ Не удалось открыть окно "Поделиться"', 'error');
-            }
+            showToast('❌ Ошибка при отправке', 'error');
             return false;
         }
     }
     
     async function exportTask() {
-        if (!currentTaskNumber) {
-            showStatus('❌ Нет активного задания', 'error');
-            return false;
-        }
-        
-        if (scannedValues.length === 0) {
-            showStatus('⚠️ Нет отсканированных значений. Задание пустое.', 'error');
-            return false;
-        }
-        
+        if (!currentTaskNumber) { showToast('❌ Нет задания', 'error'); return false; }
+        if (scannedValues.length === 0) { showToast('⚠️ Нет данных для экспорта', 'error'); return false; }
         const xmlContent = generateXML();
         const filename = `ONEGA_${currentTaskNumber.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.xml`;
-        
-        console.log('=== ONEGA XML ===');
-        console.log(xmlContent);
+        console.log('XML:', xmlContent);
         
         if (device.isTablet) {
-            const userChoice = confirm(
-                `ONEGA ТСД\n\nЗадание "${currentTaskNumber}" (${scannedValues.length} позиций)\n\n` +
-                `✅ "OK" — Поделиться\n` +
-                `❌ "Отмена" — Сохранить как файл`
-            );
-            
-            if (userChoice) {
-                return await shareFile(xmlContent, filename);
-            } else {
-                saveToFile(xmlContent, filename);
-                showStatus(`💾 Файл ${filename} сохранен`, 'success');
-                return true;
-            }
-        }
-        else if (device.isMobilePhone) {
-            if (navigator.share) {
-                return await shareFile(xmlContent, filename);
-            } else {
-                showStatus('⚠️ Ваш браузер не поддерживает "Поделиться"', 'error');
-                console.log('XML:', xmlContent);
-                return false;
-            }
-        }
-        else {
+            const choice = confirm('Поделиться? (OK — да, Отмена — сохранить файл)');
+            if (choice) return await shareFile(xmlContent, filename);
+            else saveToFile(xmlContent, filename);
+        } else if (device.isMobilePhone && navigator.share) {
+            return await shareFile(xmlContent, filename);
+        } else {
             saveToFile(xmlContent, filename);
-            showStatus(`💾 Файл ${filename} сохранен`, 'success');
-            return true;
         }
+        showToast('💾 Задание экспортировано', 'success');
+        return true;
     }
     
     async function finishTask() {
-        const success = await exportTask();
-        
-        if (success) {
+        if (await exportTask()) {
             stopCamera();
             currentTaskNumber = null;
             scannedValues = [];
+            currentAction = null;
+            actionModeDisplay.innerHTML = '⚡ Выберите действие';
+            actionModeDisplay.style.background = '#e0e0e0';
+            actionModeDisplay.style.color = '#333';
             startScreen.style.display = 'block';
             mainScreen.style.display = 'none';
             taskNumberInput.value = '';
-            showStatus('🏁 Задание завершено', 'success');
+            updateCounterAndList();
+            showToast('🏁 Задание завершено', 'success');
         }
-    }
-    
-    async function startCamera() {
-        if (scanningActive) return;
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            videoStream = stream;
-            videoEl.srcObject = stream;
-            await videoEl.play();
-            scanningActive = true;
-            showStatus('📷 Камера активна, наведите на QR-код', 'success');
-            loadQrScanner();
-        } catch(err) {
-            showStatus('❌ Нет доступа к камере: ' + err.message, 'error');
-        }
-    }
-    
-    function stopCamera() {
-        if (videoStream) {
-            videoStream.getTracks().forEach(track => track.stop());
-            videoStream = null;
-        }
-        videoEl.srcObject = null;
-        scanningActive = false;
-        if (scanFrameId) cancelAnimationFrame(scanFrameId);
-        showStatus('⏹️ Камера выключена', 'info');
-    }
-    
-    function loadQrScanner() {
-        if (window.jsQR) {
-            startQrScanLoop();
-            return;
-        }
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
-        script.onload = () => startQrScanLoop();
-        document.head.appendChild(script);
-    }
-    
-    function startQrScanLoop() {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        function scanFrame() {
-            if (!scanningActive || !videoEl.videoWidth) {
-                scanFrameId = requestAnimationFrame(scanFrame);
-                return;
-            }
-            canvas.width = videoEl.videoWidth;
-            canvas.height = videoEl.videoHeight;
-            ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" });
-            if (code && code.data) {
-                lastScannedValue = code.data;
-                showStatus(`🔍 Распознано: ${lastScannedValue} (нажмите ДОБАВИТЬ или ИСКЛЮЧИТЬ)`, 'success');
-                if (navigator.vibrate) navigator.vibrate(80);
-            }
-            scanFrameId = requestAnimationFrame(scanFrame);
-        }
-        if (scanFrameId) cancelAnimationFrame(scanFrameId);
-        scanFrameId = requestAnimationFrame(scanFrame);
     }
     
     function startTask() {
         const taskNum = taskNumberInput.value.trim();
-        if (!taskNum) {
-            showStatus('❌ Введите номер задания', 'error');
-            return;
-        }
-        
+        if (!taskNum) { showToast('❌ Введите номер задания', 'error'); return; }
         currentTaskNumber = taskNum;
-        currentInputMethod = inputMethodSelect.value;
         scannedValues = [];
-        lastScannedValue = null;
-        
+        currentAction = null;
+        actionModeDisplay.innerHTML = '⚡ Выберите действие';
+        actionModeDisplay.style.background = '#e0e0e0';
+        actionModeDisplay.style.color = '#333';
         currentTaskDisplay.textContent = currentTaskNumber;
         updateCounterAndList();
-        
         startScreen.style.display = 'none';
         mainScreen.style.display = 'block';
-        
-        if (currentInputMethod === 'camera') {
-            cameraBlock.style.display = 'block';
-            manualBlock.style.display = 'none';
-            startCamera();
-        } else {
-            cameraBlock.style.display = 'none';
-            manualBlock.style.display = 'block';
-            stopCamera();
-            manualInputValue.value = '';
-            manualInputValue.focus();
-        }
-        
-        showStatus(`✅ Задание "${currentTaskNumber}" начато`, 'success');
+        showToast(`✅ Задание "${currentTaskNumber}" начато`, 'success');
     }
     
     function closeTask() {
-        if (confirm('Закрыть задание? Все данные будут потеряны.')) {
+        if (confirm('Закрыть задание? Данные будут потеряны.')) {
             stopCamera();
             currentTaskNumber = null;
             scannedValues = [];
+            currentAction = null;
             startScreen.style.display = 'block';
             mainScreen.style.display = 'none';
             taskNumberInput.value = '';
-            showStatus('🏠 Задание закрыто', 'info');
+            showToast('🏠 Задание закрыто', 'info');
         }
     }
     
-    addBtn.addEventListener('click', () => {
-        if (!currentTaskNumber) {
-            showStatus('❌ Нет активного задания', 'error');
-            return;
-        }
-        let value = null;
-        if (currentInputMethod === 'camera') {
-            value = lastScannedValue;
-            if (value) {
-                if (addValue(value)) {
-                    lastScannedValue = null;
-                }
-            } else {
-                showStatus('📷 Сначала отсканируйте QR-код', 'error');
-            }
-        } else {
-            value = manualInputValue.value.trim();
-            if (addValue(value)) {
-                manualInputValue.value = '';
-                manualInputValue.focus();
-            }
-        }
-    });
-    
-    removeBtn.addEventListener('click', () => {
-        if (!currentTaskNumber) {
-            showStatus('❌ Нет активного задания', 'error');
-            return;
-        }
-        let value = null;
-        if (currentInputMethod === 'camera') {
-            value = lastScannedValue;
-            if (value) {
-                removeValue(value);
-                lastScannedValue = null;
-            } else {
-                showStatus('📷 Сначала отсканируйте QR-код для исключения', 'error');
-            }
-        } else {
-            value = manualInputValue.value.trim();
-            if (removeValue(value)) {
-                manualInputValue.value = '';
-                manualInputValue.focus();
-            }
-        }
-    });
-    
-    startCameraBtn.addEventListener('click', startCamera);
-    stopCameraBtn.addEventListener('click', stopCamera);
     clearAllBtn.addEventListener('click', () => {
-        if (confirm(`Очистить все ${scannedValues.length} значений?`)) {
+        if (confirm(`Очистить ${scannedValues.length} значений?`)) {
             scannedValues = [];
             updateCounterAndList();
-            showStatus('🗑️ Все значения удалены', 'success');
+            showToast('🗑️ Все значения удалены', 'info');
         }
     });
     
@@ -823,15 +696,7 @@
     startTaskBtn.addEventListener('click', startTask);
     closeTaskBtn.addEventListener('click', closeTask);
     
-    manualInputValue.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addBtn.click();
-        }
-    });
-    
     updateCounterAndList();
-    showStatus('Введите номер задания и начните', 'info');
 </script>
 </body>
 </html>

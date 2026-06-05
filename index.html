@@ -190,11 +190,6 @@
             margin-top: 4px;
         }
         
-        /* Скрытый input для камеры */
-        #cameraInput {
-            display: none;
-        }
-        
         /* TOAST уведомления */
         .toast-container {
             position: fixed;
@@ -248,11 +243,43 @@
             margin-bottom: 16px;
         }
         
-        .scan-button {
+        .mode-selector {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 20px 12px;
+            font-size: 1.1rem;
+        }
+        
+        .mode-btn.device {
             background: #2c3e50;
             color: white;
-            font-size: 1.2rem;
-            padding: 16px;
+        }
+        
+        .mode-btn.photo {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .hidden-field {
+            position: fixed;
+            top: -100px;
+            left: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        #tsdScannerInput {
+            position: fixed;
+            top: -100px;
+            left: 0;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
         }
     </style>
 </head>
@@ -263,21 +290,27 @@
         <div class="logo-sub">Логистика · Сканер ТСД</div>
     </div>
 
+    <!-- СТАРТОВЫЙ ЭКРАН -->
     <div id="startScreen" class="card">
         <div class="card-title">📋 Новое задание</div>
         <div class="input-group">
             <label>🔢 Номер задания / заказа</label>
             <input type="text" id="taskNumberInput" placeholder="например: ON-001" autocomplete="off">
         </div>
-        <button class="btn btn-primary" id="startTaskBtn" style="width: 100%;">▶️ Начать задание</button>
+        <div class="mode-selector">
+            <button id="tsdModeBtn" class="btn mode-btn device">🎯 ТСД / ПК<br><span style="font-size: 0.7rem;">(лазерный сканер)</span></button>
+            <button id="photoModeBtn" class="btn mode-btn photo">📷 Смартфон<br><span style="font-size: 0.7rem;">(фото штрих-кода)</span></button>
+        </div>
     </div>
 
+    <!-- ОСНОВНОЙ ЭКРАН -->
     <div id="mainScreen" style="display: none;">
         <div class="card">
             <div class="flex-between">
                 <div>
                     <div style="font-size: 0.75rem; color:#757575;">Текущее задание</div>
                     <div style="font-size: 1.3rem; font-weight: 700; color: #C62828;" id="currentTaskDisplay">—</div>
+                    <div style="font-size: 0.7rem; color:#757575;" id="modeDisplay"></div>
                 </div>
                 <button class="btn btn-secondary" id="closeTaskBtn" style="padding: 8px 16px;">🏠 Закрыть</button>
             </div>
@@ -300,14 +333,24 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-title">📷 Сканирование QR</div>
-            <button id="scanPhotoBtn" class="btn btn-primary scan-button" style="width: 100%;">📷 СКАНИРОВАТЬ</button>
+        <!-- Блок для режима ФОТО -->
+        <div id="photoModeBlock" class="card" style="display: none;">
+            <div class="card-title">📷 Сканирование фото</div>
+            <button id="scanPhotoBtn" class="btn btn-primary" style="width: 100%;">📷 СКАНИРОВАТЬ</button>
             <div style="font-size: 0.7rem; color:#757575; text-align: center; margin-top: 8px;">
-                Нажмите кнопку и сфотографируйте QR-код
+                Нажмите кнопку и сфотографируйте QR, штрих-код или DataMatrix
             </div>
-            <!-- Скрытый input для вызова камеры -->
-            <input type="file" id="cameraInput" accept="image/*" capture="environment">
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+        </div>
+
+        <!-- Блок для режима ТСД / ПК -->
+        <div id="tsdModeBlock" class="card" style="display: none;">
+            <div class="card-title">🎯 Сканирование ТСД</div>
+            <div style="background: #f0f0f0; border-radius: 12px; padding: 16px; text-align: center;">
+                <div style="font-size: 1.2rem; margin-bottom: 8px;">🖨️ Готов к сканированию</div>
+                <div style="font-size: 0.8rem; color: #757575;">Наведите сканер на штрих-код или QR</div>
+                <div style="font-size: 0.7rem; color: #C62828; margin-top: 8px;" id="lastScanValue"></div>
+            </div>
         </div>
 
         <div class="card">
@@ -328,9 +371,13 @@
     </div>
 </div>
 
+<!-- Скрытое поле для режима ТСД -->
+<input type="text" id="tsdScannerInput" class="hidden-field" autocomplete="off">
+
 <div id="toastContainer" class="toast-container"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<!-- Подключаем ZXing для распознавания всех типов штрих-кодов -->
+<script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 <script>
     // TOAST
     function showToast(message, type = 'info') {
@@ -343,49 +390,41 @@
         if (navigator.vibrate) navigator.vibrate(50);
     }
 
-    // Определение устройства
-    function getDeviceType() {
-        const ua = navigator.userAgent;
-        const isIOS = /iPhone|iPad|iPod/i.test(ua);
-        const isAndroid = /Android/i.test(ua);
-        const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        const isIPadWithMacUA = /Macintosh/i.test(ua) && isTouch && !window.MSStream;
-        const isTablet = (isAndroid && !/Mobile/i.test(ua)) || (isIOS && /iPad/i.test(ua)) || isIPadWithMacUA;
-        const isMobilePhone = (isAndroid && /Mobile/i.test(ua)) || /iPhone/i.test(ua);
-        return { isTablet, isMobilePhone, isDesktop: !isTablet && !isMobilePhone };
-    }
-    
-    const device = getDeviceType();
-    
     // Глобальные переменные
     let currentTaskNumber = null;
     let scannedValues = [];
     let currentAction = null;      // 'add' или 'remove'
-    let isProcessing = false;      // Блокировка во время обработки
+    let currentMode = null;        // 'tsd' или 'photo'
+    let isProcessing = false;
     
+    // Для ZXing
+    let zxingReader = null;
+    
+    // DOM элементы
     const startScreen = document.getElementById('startScreen');
     const mainScreen = document.getElementById('mainScreen');
     const taskNumberInput = document.getElementById('taskNumberInput');
-    const startTaskBtn = document.getElementById('startTaskBtn');
+    const tsdModeBtn = document.getElementById('tsdModeBtn');
+    const photoModeBtn = document.getElementById('photoModeBtn');
     const closeTaskBtn = document.getElementById('closeTaskBtn');
     const finishTaskBtn = document.getElementById('finishTaskBtn');
     const currentTaskDisplay = document.getElementById('currentTaskDisplay');
+    const modeDisplay = document.getElementById('modeDisplay');
     const counterValue = document.getElementById('counterValue');
     const setAddModeBtn = document.getElementById('setAddModeBtn');
     const setRemoveModeBtn = document.getElementById('setRemoveModeBtn');
     const actionModeDisplay = document.getElementById('actionModeDisplay');
+    const photoModeBlock = document.getElementById('photoModeBlock');
+    const tsdModeBlock = document.getElementById('tsdModeBlock');
     const scanPhotoBtn = document.getElementById('scanPhotoBtn');
     const cameraInput = document.getElementById('cameraInput');
+    const tsdScannerInput = document.getElementById('tsdScannerInput');
+    const lastScanValue = document.getElementById('lastScanValue');
     const scanListContainer = document.getElementById('scanListContainer');
     const clearAllBtn = document.getElementById('clearAllBtn');
     const deviceInfo = document.getElementById('deviceInfo');
     
-    if (deviceInfo) {
-        if (device.isDesktop) deviceInfo.textContent = '💻 ПК-режим: файл сохранится';
-        else if (device.isMobilePhone) deviceInfo.textContent = '📱 Телефон: "Поделиться"';
-        else deviceInfo.textContent = '📟 Планшет: выбор действия';
-    }
-    
+    // Функции данных
     function updateCounterAndList() {
         counterValue.textContent = scannedValues.length;
         if (scannedValues.length === 0) {
@@ -407,7 +446,6 @@
         return str.replace(/[<>&]/g, m => m === '<' ? '&lt;' : m === '>' ? '&gt;' : '&amp;');
     }
     
-    // Действия с данными
     function addValue(value) {
         if (!value || value.trim() === '') {
             showToast('❌ Пустое значение', 'error');
@@ -441,22 +479,45 @@
         return true;
     }
     
-    // Распознавание QR из изображения
-    async function decodeQRFromImage(file) {
+    function performAction(value) {
+        if (!currentAction) {
+            showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
+            return false;
+        }
+        if (currentAction === 'add') {
+            return addValue(value);
+        } else if (currentAction === 'remove') {
+            return removeValue(value);
+        }
+        return false;
+    }
+    
+    // ========== РЕЖИМ ФОТО (ZXing) ==========
+    async function initZXing() {
+        if (!window.ZXing) {
+            console.log('Ждём загрузку ZXing...');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            if (!window.ZXing) {
+                showToast('❌ Ошибка загрузки библиотеки', 'error');
+                return false;
+            }
+        }
+        zxingReader = new ZXing.BrowserMultiFormatReader();
+        return true;
+    }
+    
+    async function decodeBarcodeFromImage(file) {
+        if (!zxingReader) {
+            await initZXing();
+        }
         return new Promise((resolve, reject) => {
             const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, canvas.width, canvas.height);
-                if (code) {
-                    resolve(code.data);
-                } else {
-                    reject(new Error('QR не найден'));
+            img.onload = async () => {
+                try {
+                    const result = await zxingReader.decodeFromImageElement(img);
+                    resolve(result.getText());
+                } catch (error) {
+                    reject(new Error('Штрих-код не распознан'));
                 }
             };
             img.onerror = () => reject(new Error('Ошибка загрузки изображения'));
@@ -464,40 +525,28 @@
         });
     }
     
-    // Обработка сканирования
-    async function handleScan(file) {
+    async function handlePhotoScan(file) {
         if (isProcessing) {
             showToast('⏳ Подождите, обрабатывается...', 'info');
             return;
         }
         
-        if (!currentAction) {
-            showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
-            return;
-        }
-        
         isProcessing = true;
-        showToast('🔍 Распознаю QR-код...', 'info');
+        showToast('🔍 Распознаю штрих-код...', 'info');
         
         try {
-            const qrValue = await decodeQRFromImage(file);
-            showToast(`📷 Распознано: ${qrValue}`, 'info');
-            
-            if (currentAction === 'add') {
-                addValue(qrValue);
-            } else if (currentAction === 'remove') {
-                removeValue(qrValue);
-            }
+            const value = await decodeBarcodeFromImage(file);
+            showToast(`📷 Распознано: ${value}`, 'info');
+            performAction(value);
         } catch (error) {
             console.error(error);
-            showToast('❌ Не удалось распознать QR-код. Попробуйте еще раз.', 'error');
+            showToast('❌ Не удалось распознать штрих-код. Попробуйте еще раз.', 'error');
         } finally {
             isProcessing = false;
-            cameraInput.value = ''; // Очищаем, чтобы можно было сканировать снова
+            cameraInput.value = '';
         }
     }
     
-    // Вызов камеры
     function openCamera() {
         if (!currentAction) {
             showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
@@ -509,31 +558,105 @@
     cameraInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (file) {
-            handleScan(file);
+            handlePhotoScan(file);
         }
     });
     
-    // Установка режима
+    // ========== РЕЖИМ ТСД / ПК (клавиатурный ввод) ==========
+    function setupTsdMode() {
+        // Фокусируемся на скрытом поле
+        tsdScannerInput.focus();
+        
+        // Обработчик ввода с клавиатуры (сканер эмулирует клавиатуру + Enter)
+        const handleTsdInput = (e) => {
+            if (e.key === 'Enter') {
+                const value = tsdScannerInput.value.trim();
+                if (value) {
+                    if (lastScanValue) lastScanValue.textContent = `Последний скан: ${value}`;
+                    performAction(value);
+                    tsdScannerInput.value = '';
+                }
+                e.preventDefault();
+            }
+        };
+        
+        tsdScannerInput.removeEventListener('keypress', handleTsdInput);
+        tsdScannerInput.addEventListener('keypress', handleTsdInput);
+        
+        // Убеждаемся, что поле всегда в фокусе
+        const keepFocus = () => {
+            if (document.activeElement !== tsdScannerInput && currentMode === 'tsd') {
+                tsdScannerInput.focus();
+            }
+        };
+        setInterval(keepFocus, 500);
+    }
+    
+    // ========== ВЫБОР РЕЖИМА И ДЕЙСТВИЙ ==========
     function setAction(action) {
         currentAction = action;
         if (action === 'add') {
-            actionModeDisplay.innerHTML = '➕ РЕЖИМ: ДОБАВЛЕНИЕ — сканируйте QR';
+            actionModeDisplay.innerHTML = '➕ РЕЖИМ: ДОБАВЛЕНИЕ — сканируйте';
             actionModeDisplay.style.background = '#C62828';
             actionModeDisplay.style.color = 'white';
             showToast('Режим ДОБАВЛЕНИЯ активирован', 'info');
         } else if (action === 'remove') {
-            actionModeDisplay.innerHTML = '➖ РЕЖИМ: ИСКЛЮЧЕНИЕ — сканируйте QR';
+            actionModeDisplay.innerHTML = '➖ РЕЖИМ: ИСКЛЮЧЕНИЕ — сканируйте';
             actionModeDisplay.style.background = '#B71C1C';
             actionModeDisplay.style.color = 'white';
             showToast('Режим ИСКЛЮЧЕНИЯ активирован', 'info');
         }
+        
+        // В режиме ТСД переставляем фокус
+        if (currentMode === 'tsd') {
+            tsdScannerInput.focus();
+        }
     }
+    
+    function startTask(mode) {
+        const taskNum = taskNumberInput.value.trim();
+        if (!taskNum) {
+            showToast('❌ Введите номер задания', 'error');
+            return;
+        }
+        
+        currentTaskNumber = taskNum;
+        scannedValues = [];
+        currentAction = null;
+        currentMode = mode;
+        
+        currentTaskDisplay.textContent = currentTaskNumber;
+        modeDisplay.textContent = mode === 'tsd' ? '🎯 Режим: ТСД / ПК (лазерный сканер)' : '📷 Режим: Смартфон (фото)';
+        actionModeDisplay.innerHTML = '⚡ Выберите действие';
+        actionModeDisplay.style.background = '#e0e0e0';
+        actionModeDisplay.style.color = '#333';
+        updateCounterAndList();
+        
+        // Показываем нужный блок
+        if (mode === 'photo') {
+            photoModeBlock.style.display = 'block';
+            tsdModeBlock.style.display = 'none';
+            initZXing();
+        } else {
+            photoModeBlock.style.display = 'none';
+            tsdModeBlock.style.display = 'block';
+            setupTsdMode();
+        }
+        
+        startScreen.style.display = 'none';
+        mainScreen.style.display = 'block';
+        
+        showToast(`✅ Задание "${currentTaskNumber}" начато в режиме ${mode === 'tsd' ? 'ТСД/ПК' : 'Фото'}`, 'success');
+    }
+    
+    tsdModeBtn.addEventListener('click', () => startTask('tsd'));
+    photoModeBtn.addEventListener('click', () => startTask('photo'));
     
     setAddModeBtn.addEventListener('click', () => setAction('add'));
     setRemoveModeBtn.addEventListener('click', () => setAction('remove'));
     scanPhotoBtn.addEventListener('click', openCamera);
     
-    // Экспорт
+    // ========== ЭКСПОРТ XML ==========
     function generateXML() {
         let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<task>\n';
         xml += `  <taskNumber>${escapeXml(currentTaskNumber)}</taskNumber>\n`;
@@ -561,7 +684,11 @@
         const blob = new Blob([content], {type: 'application/xml'});
         const file = new File([blob], filename, {type: 'application/xml'});
         try {
-            await navigator.share({ title: 'ONEGA Задание', text: `${currentTaskNumber} (${scannedValues.length} позиций)`, files: [file] });
+            await navigator.share({
+                title: 'ONEGA Задание',
+                text: `${currentTaskNumber} (${scannedValues.length} позиций)`,
+                files: [file]
+            });
             showToast('📤 Данные отправлены', 'success');
             return true;
         } catch (err) {
@@ -572,22 +699,19 @@
     
     async function exportTask() {
         if (!currentTaskNumber) { showToast('❌ Нет задания', 'error'); return false; }
-        if (scannedValues.length === 0) { showToast('⚠️ Нет данных', 'error'); return false; }
+        if (scannedValues.length === 0) { showToast('⚠️ Нет данных для экспорта', 'error'); return false; }
+        
         const xmlContent = generateXML();
         const filename = `ONEGA_${currentTaskNumber.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.xml`;
         console.log('XML:', xmlContent);
         
-        if (device.isTablet) {
-            const choice = confirm('Поделиться? (OK — да, Отмена — сохранить)');
-            if (choice) return await shareFile(xmlContent, filename);
-            else saveToFile(xmlContent, filename);
-        } else if (device.isMobilePhone && navigator.share) {
+        if (navigator.share && confirm('Отправить файл через "Поделиться"? (Отмена — сохранить локально)')) {
             return await shareFile(xmlContent, filename);
         } else {
             saveToFile(xmlContent, filename);
+            showToast('💾 Файл сохранён', 'success');
+            return true;
         }
-        showToast('💾 Задание экспортировано', 'success');
-        return true;
     }
     
     async function finishTask() {
@@ -595,9 +719,7 @@
             currentTaskNumber = null;
             scannedValues = [];
             currentAction = null;
-            actionModeDisplay.innerHTML = '⚡ Выберите действие';
-            actionModeDisplay.style.background = '#e0e0e0';
-            actionModeDisplay.style.color = '#333';
+            currentMode = null;
             startScreen.style.display = 'block';
             mainScreen.style.display = 'none';
             taskNumberInput.value = '';
@@ -606,27 +728,12 @@
         }
     }
     
-    function startTask() {
-        const taskNum = taskNumberInput.value.trim();
-        if (!taskNum) { showToast('❌ Введите номер задания', 'error'); return; }
-        currentTaskNumber = taskNum;
-        scannedValues = [];
-        currentAction = null;
-        actionModeDisplay.innerHTML = '⚡ Выберите действие';
-        actionModeDisplay.style.background = '#e0e0e0';
-        actionModeDisplay.style.color = '#333';
-        currentTaskDisplay.textContent = currentTaskNumber;
-        updateCounterAndList();
-        startScreen.style.display = 'none';
-        mainScreen.style.display = 'block';
-        showToast(`✅ Задание "${currentTaskNumber}" начато`, 'success');
-    }
-    
     function closeTask() {
-        if (confirm('Закрыть задание? Данные будут потеряны.')) {
+        if (confirm('Закрыть задание? Все данные будут потеряны.')) {
             currentTaskNumber = null;
             scannedValues = [];
             currentAction = null;
+            currentMode = null;
             startScreen.style.display = 'block';
             mainScreen.style.display = 'none';
             taskNumberInput.value = '';
@@ -635,7 +742,7 @@
     }
     
     clearAllBtn.addEventListener('click', () => {
-        if (confirm(`Очистить ${scannedValues.length} значений?`)) {
+        if (confirm(`Очистить все ${scannedValues.length} значений?`)) {
             scannedValues = [];
             updateCounterAndList();
             showToast('🗑️ Все значения удалены', 'info');
@@ -643,10 +750,13 @@
     });
     
     finishTaskBtn.addEventListener('click', finishTask);
-    startTaskBtn.addEventListener('click', startTask);
     closeTaskBtn.addEventListener('click', closeTask);
     
     updateCounterAndList();
+    deviceInfo.textContent = 'Выберите режим сканирования';
+    
+    // Предзагрузка ZXing
+    initZXing();
 </script>
 </body>
 </html>

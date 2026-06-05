@@ -23,7 +23,6 @@
             margin: 0 auto;
         }
         
-        /* ========== КОРПОРАТИВНЫЕ ЦВЕТА ========== */
         .card {
             background: #FFFFFF;
             border-radius: 16px;
@@ -65,7 +64,6 @@
             background: #FFFFFF;
             color: #333333;
             font-size: 1rem;
-            transition: border-color 0.2s;
         }
         
         input:focus, select:focus {
@@ -94,10 +92,6 @@
             background: #C62828;
             color: white;
             box-shadow: 0 2px 4px rgba(198, 40, 40, 0.3);
-        }
-        
-        .btn-primary:hover {
-            background: #B71C1C;
         }
         
         .btn-success {
@@ -210,7 +204,7 @@
             margin-top: 4px;
         }
         
-        /* ========== TOAST-УВЕДОМЛЕНИЯ (центр экрана) ========== */
+        /* TOAST уведомления */
         .toast-container {
             position: fixed;
             top: 50%;
@@ -230,25 +224,20 @@
             text-align: center;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             animation: fadeInOut 2s ease forwards;
-            white-space: nowrap;
             max-width: 90vw;
-            white-space: normal;
             word-break: break-word;
         }
         
         .toast.success {
             background: #C62828;
-            color: white;
         }
         
         .toast.error {
             background: #B71C1C;
-            color: white;
         }
         
         .toast.info {
             background: #757575;
-            color: white;
         }
         
         @keyframes fadeInOut {
@@ -258,20 +247,14 @@
             100% { opacity: 0; transform: scale(0.9); }
         }
         
-        /* Активный режим сканирования */
         .action-mode {
             background: #C62828;
             color: white;
-            padding: 10px;
+            padding: 12px;
             border-radius: 16px;
             text-align: center;
             font-weight: bold;
             margin-bottom: 16px;
-        }
-        
-        button:disabled {
-            opacity: 0.6;
-            transform: none;
         }
     </style>
 </head>
@@ -282,7 +265,6 @@
         <div class="logo-sub">Логистика · Сканер ТСД</div>
     </div>
 
-    <!-- СТАРТОВЫЙ ЭКРАН -->
     <div id="startScreen" class="card">
         <div class="card-title">📋 Новое задание</div>
         <div class="input-group">
@@ -292,7 +274,6 @@
         <button class="btn btn-primary" id="startTaskBtn" style="width: 100%;">▶️ Начать задание</button>
     </div>
 
-    <!-- ОСНОВНОЙ ЭКРАН -->
     <div id="mainScreen" style="display: none;">
         <div class="card">
             <div class="flex-between">
@@ -310,19 +291,17 @@
             <div style="text-align: center; font-size: 0.8rem; color:#757575;">отсканировано в задании</div>
         </div>
 
-        <!-- Режим работы -->
         <div class="card">
             <div class="card-title">🎯 Действие</div>
             <div class="flex">
                 <button id="setAddModeBtn" class="btn btn-success" style="flex:1;">➕ ДОБАВИТЬ</button>
                 <button id="setRemoveModeBtn" class="btn btn-danger" style="flex:1;">➖ ИСКЛЮЧИТЬ</button>
             </div>
-            <div id="actionModeDisplay" class="action-mode" style="margin-top: 12px; background: #e0e0e0; color: #333;">
+            <div id="actionModeDisplay" class="action-mode" style="background: #e0e0e0; color: #333;">
                 ⚡ Выберите действие
             </div>
         </div>
 
-        <!-- Сканер -->
         <div class="card">
             <div class="card-title">📷 Сканирование</div>
             <div class="scanner-box">
@@ -334,7 +313,6 @@
             </div>
         </div>
 
-        <!-- Список значений -->
         <div class="card">
             <div class="flex-between">
                 <div class="card-title" style="margin-bottom: 0;">📦 Список значений</div>
@@ -345,7 +323,6 @@
             </div>
         </div>
 
-        <!-- Завершение -->
         <div class="card">
             <div class="card-title">🏁 Завершить задание</div>
             <button id="finishTaskBtn" class="btn btn-primary" style="width: 100%;">✅ Завершить задание</button>
@@ -354,47 +331,46 @@
     </div>
 </div>
 
-<!-- КОНТЕЙНЕР ДЛЯ TOAST-ОВ -->
 <div id="toastContainer" class="toast-container"></div>
 
 <script>
-    // ========== TOAST-УВЕДОМЛЕНИЯ ==========
+    // TOAST
     function showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.textContent = message;
         container.appendChild(toast);
-        setTimeout(() => {
-            toast.remove();
-        }, 2000);
+        setTimeout(() => toast.remove(), 2000);
         if (navigator.vibrate) navigator.vibrate(50);
     }
 
-    // ========== ОПРЕДЕЛЕНИЕ УСТРОЙСТВА ==========
+    // Определение устройства
     function getDeviceType() {
         const ua = navigator.userAgent;
         const isIOS = /iPhone|iPad|iPod/i.test(ua);
         const isAndroid = /Android/i.test(ua);
         const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         const isIPadWithMacUA = /Macintosh/i.test(ua) && isTouch && !window.MSStream;
-        const isTablet = (isAndroid && !/Mobile/i.test(ua)) ||
-                         (isIOS && /iPad/i.test(ua)) ||
-                         isIPadWithMacUA;
+        const isTablet = (isAndroid && !/Mobile/i.test(ua)) || (isIOS && /iPad/i.test(ua)) || isIPadWithMacUA;
         const isMobilePhone = (isAndroid && /Mobile/i.test(ua)) || /iPhone/i.test(ua);
         return { isTablet, isMobilePhone, isDesktop: !isTablet && !isMobilePhone };
     }
     
     const device = getDeviceType();
     
-    // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+    // Глобальные переменные
     let currentTaskNumber = null;
     let scannedValues = [];
     let currentAction = null;      // 'add' или 'remove'
     let videoStream = null;
     let scanningActive = false;
     let scanFrameId = null;
-    let isProcessingScan = false;   // Блокировка повторных сканов
+    
+    // ЗАЩИТА ОТ ПОВТОРОВ
+    let lastScannedValue = null;
+    let lastScanTime = 0;
+    const SCAN_COOLDOWN_MS = 2000;  // 2 секунды на один QR
     
     const videoEl = document.getElementById('video');
     const startScreen = document.getElementById('startScreen');
@@ -420,7 +396,6 @@
         else deviceInfo.textContent = '📟 Планшет: выбор действия';
     }
     
-    // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
     function updateCounterAndList() {
         counterValue.textContent = scannedValues.length;
         if (scannedValues.length === 0) {
@@ -442,7 +417,7 @@
         return str.replace(/[<>&]/g, m => m === '<' ? '&lt;' : m === '>' ? '&gt;' : '&amp;');
     }
     
-    // ========== ЛОГИКА ДОБАВЛЕНИЯ/УДАЛЕНИЯ ==========
+    // Действия с данными
     function addValue(value) {
         if (!value || value.trim() === '') {
             showToast('❌ Пустое значение', 'error');
@@ -476,37 +451,43 @@
         return true;
     }
     
-    // ========== ОБРАБОТКА СКАНИРОВАНИЯ (вызывается при обнаружении QR) ==========
+    // Обработка сканирования с защитой от повторов
     function processScannedValue(value) {
-        if (isProcessingScan) return;
+        const now = Date.now();
+        
+        // Проверка: тот же QR и не прошло 2 секунды?
+        if (value === lastScannedValue && (now - lastScanTime) < SCAN_COOLDOWN_MS) {
+            console.log('Повторный скан игнорируется:', value);
+            return;  // игнорируем
+        }
+        
+        // Обновляем последний скан
+        lastScannedValue = value;
+        lastScanTime = now;
+        
+        // Выполняем действие
         if (!currentAction) {
             showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
             return;
         }
-        isProcessingScan = true;
         
         if (currentAction === 'add') {
             addValue(value);
         } else if (currentAction === 'remove') {
             removeValue(value);
         }
-        
-        // Небольшая задержка, чтобы не обрабатывать тот же QR повторно
-        setTimeout(() => {
-            isProcessingScan = false;
-        }, 500);
     }
     
-    // ========== ВЫБОР ДЕЙСТВИЯ ==========
+    // Установка режима
     function setAction(action) {
         currentAction = action;
         if (action === 'add') {
-            actionModeDisplay.innerHTML = '➕ РЕЖИМ: ДОБАВЛЕНИЕ — сканируйте QR для добавления';
+            actionModeDisplay.innerHTML = '➕ РЕЖИМ: ДОБАВЛЕНИЕ — сканируйте QR';
             actionModeDisplay.style.background = '#C62828';
             actionModeDisplay.style.color = 'white';
             showToast('Режим ДОБАВЛЕНИЯ активирован', 'info');
         } else if (action === 'remove') {
-            actionModeDisplay.innerHTML = '➖ РЕЖИМ: ИСКЛЮЧЕНИЕ — сканируйте QR для удаления';
+            actionModeDisplay.innerHTML = '➖ РЕЖИМ: ИСКЛЮЧЕНИЕ — сканируйте QR';
             actionModeDisplay.style.background = '#B71C1C';
             actionModeDisplay.style.color = 'white';
             showToast('Режим ИСКЛЮЧЕНИЯ активирован', 'info');
@@ -516,7 +497,7 @@
     setAddModeBtn.addEventListener('click', () => setAction('add'));
     setRemoveModeBtn.addEventListener('click', () => setAction('remove'));
     
-    // ========== КАМЕРА И QR ==========
+    // Камера
     async function startCamera() {
         if (scanningActive) return;
         try {
@@ -567,10 +548,8 @@
             ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const code = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" });
-            if (code && code.data && !isProcessingScan) {
-                const qrValue = code.data;
-                showToast(`🔍 Распознано: ${qrValue}`, 'info');
-                processScannedValue(qrValue);
+            if (code && code.data) {
+                processScannedValue(code.data);
             }
             scanFrameId = requestAnimationFrame(scanFrame);
         }
@@ -581,7 +560,7 @@
     startCameraBtn.addEventListener('click', startCamera);
     stopCameraBtn.addEventListener('click', stopCamera);
     
-    // ========== ОСТАЛЬНОЙ ФУНКЦИОНАЛ ==========
+    // Экспорт
     function generateXML() {
         let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<task>\n';
         xml += `  <taskNumber>${escapeXml(currentTaskNumber)}</taskNumber>\n`;
@@ -620,13 +599,13 @@
     
     async function exportTask() {
         if (!currentTaskNumber) { showToast('❌ Нет задания', 'error'); return false; }
-        if (scannedValues.length === 0) { showToast('⚠️ Нет данных для экспорта', 'error'); return false; }
+        if (scannedValues.length === 0) { showToast('⚠️ Нет данных', 'error'); return false; }
         const xmlContent = generateXML();
         const filename = `ONEGA_${currentTaskNumber.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.xml`;
         console.log('XML:', xmlContent);
         
         if (device.isTablet) {
-            const choice = confirm('Поделиться? (OK — да, Отмена — сохранить файл)');
+            const choice = confirm('Поделиться? (OK — да, Отмена — сохранить)');
             if (choice) return await shareFile(xmlContent, filename);
             else saveToFile(xmlContent, filename);
         } else if (device.isMobilePhone && navigator.share) {
@@ -644,6 +623,7 @@
             currentTaskNumber = null;
             scannedValues = [];
             currentAction = null;
+            lastScannedValue = null;
             actionModeDisplay.innerHTML = '⚡ Выберите действие';
             actionModeDisplay.style.background = '#e0e0e0';
             actionModeDisplay.style.color = '#333';
@@ -661,6 +641,7 @@
         currentTaskNumber = taskNum;
         scannedValues = [];
         currentAction = null;
+        lastScannedValue = null;
         actionModeDisplay.innerHTML = '⚡ Выберите действие';
         actionModeDisplay.style.background = '#e0e0e0';
         actionModeDisplay.style.color = '#333';
@@ -677,6 +658,7 @@
             currentTaskNumber = null;
             scannedValues = [];
             currentAction = null;
+            lastScannedValue = null;
             startScreen.style.display = 'block';
             mainScreen.style.display = 'none';
             taskNumberInput.value = '';

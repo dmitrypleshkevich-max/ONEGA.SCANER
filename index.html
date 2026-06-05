@@ -128,20 +128,6 @@
             align-items: center;
         }
         
-        .scanner-box {
-            background: #fafafa;
-            border-radius: 16px;
-            padding: 12px;
-            margin: 16px 0;
-            border: 2px solid #C62828;
-        }
-        
-        video {
-            width: 100%;
-            border-radius: 12px;
-            background: #000;
-        }
-        
         .scan-list {
             max-height: 280px;
             overflow-y: auto;
@@ -204,6 +190,11 @@
             margin-top: 4px;
         }
         
+        /* Скрытый input для камеры */
+        #cameraInput {
+            display: none;
+        }
+        
         /* TOAST уведомления */
         .toast-container {
             position: fixed;
@@ -256,6 +247,13 @@
             font-weight: bold;
             margin-bottom: 16px;
         }
+        
+        .scan-button {
+            background: #2c3e50;
+            color: white;
+            font-size: 1.2rem;
+            padding: 16px;
+        }
     </style>
 </head>
 <body>
@@ -303,14 +301,13 @@
         </div>
 
         <div class="card">
-            <div class="card-title">📷 Сканирование</div>
-            <div class="scanner-box">
-                <video id="video" autoplay playsinline muted></video>
-                <div class="flex" style="margin-top: 12px;">
-                    <button id="startCameraBtn" class="btn btn-primary" style="flex:1;">📷 Включить камеру</button>
-                    <button id="stopCameraBtn" class="btn btn-secondary" style="flex:1;">⏹️ Выключить</button>
-                </div>
+            <div class="card-title">📷 Сканирование QR</div>
+            <button id="scanPhotoBtn" class="btn btn-primary scan-button" style="width: 100%;">📷 СКАНИРОВАТЬ</button>
+            <div style="font-size: 0.7rem; color:#757575; text-align: center; margin-top: 8px;">
+                Нажмите кнопку и сфотографируйте QR-код
             </div>
+            <!-- Скрытый input для вызова камеры -->
+            <input type="file" id="cameraInput" accept="image/*" capture="environment">
         </div>
 
         <div class="card">
@@ -333,6 +330,7 @@
 
 <div id="toastContainer" class="toast-container"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script>
     // TOAST
     function showToast(message, type = 'info') {
@@ -363,16 +361,8 @@
     let currentTaskNumber = null;
     let scannedValues = [];
     let currentAction = null;      // 'add' или 'remove'
-    let videoStream = null;
-    let scanningActive = false;
-    let scanFrameId = null;
+    let isProcessing = false;      // Блокировка во время обработки
     
-    // ЗАЩИТА ОТ ПОВТОРОВ
-    let lastScannedValue = null;
-    let lastScanTime = 0;
-    const SCAN_COOLDOWN_MS = 2000;  // 2 секунды на один QR
-    
-    const videoEl = document.getElementById('video');
     const startScreen = document.getElementById('startScreen');
     const mainScreen = document.getElementById('mainScreen');
     const taskNumberInput = document.getElementById('taskNumberInput');
@@ -384,8 +374,8 @@
     const setAddModeBtn = document.getElementById('setAddModeBtn');
     const setRemoveModeBtn = document.getElementById('setRemoveModeBtn');
     const actionModeDisplay = document.getElementById('actionModeDisplay');
-    const startCameraBtn = document.getElementById('startCameraBtn');
-    const stopCameraBtn = document.getElementById('stopCameraBtn');
+    const scanPhotoBtn = document.getElementById('scanPhotoBtn');
+    const cameraInput = document.getElementById('cameraInput');
     const scanListContainer = document.getElementById('scanListContainer');
     const clearAllBtn = document.getElementById('clearAllBtn');
     const deviceInfo = document.getElementById('deviceInfo');
@@ -451,32 +441,77 @@
         return true;
     }
     
-    // Обработка сканирования с защитой от повторов
-    function processScannedValue(value) {
-        const now = Date.now();
-        
-        // Проверка: тот же QR и не прошло 2 секунды?
-        if (value === lastScannedValue && (now - lastScanTime) < SCAN_COOLDOWN_MS) {
-            console.log('Повторный скан игнорируется:', value);
-            return;  // игнорируем
+    // Распознавание QR из изображения
+    async function decodeQRFromImage(file) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, canvas.width, canvas.height);
+                if (code) {
+                    resolve(code.data);
+                } else {
+                    reject(new Error('QR не найден'));
+                }
+            };
+            img.onerror = () => reject(new Error('Ошибка загрузки изображения'));
+            img.src = URL.createObjectURL(file);
+        });
+    }
+    
+    // Обработка сканирования
+    async function handleScan(file) {
+        if (isProcessing) {
+            showToast('⏳ Подождите, обрабатывается...', 'info');
+            return;
         }
         
-        // Обновляем последний скан
-        lastScannedValue = value;
-        lastScanTime = now;
-        
-        // Выполняем действие
         if (!currentAction) {
             showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
             return;
         }
         
-        if (currentAction === 'add') {
-            addValue(value);
-        } else if (currentAction === 'remove') {
-            removeValue(value);
+        isProcessing = true;
+        showToast('🔍 Распознаю QR-код...', 'info');
+        
+        try {
+            const qrValue = await decodeQRFromImage(file);
+            showToast(`📷 Распознано: ${qrValue}`, 'info');
+            
+            if (currentAction === 'add') {
+                addValue(qrValue);
+            } else if (currentAction === 'remove') {
+                removeValue(qrValue);
+            }
+        } catch (error) {
+            console.error(error);
+            showToast('❌ Не удалось распознать QR-код. Попробуйте еще раз.', 'error');
+        } finally {
+            isProcessing = false;
+            cameraInput.value = ''; // Очищаем, чтобы можно было сканировать снова
         }
     }
+    
+    // Вызов камеры
+    function openCamera() {
+        if (!currentAction) {
+            showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
+            return;
+        }
+        cameraInput.click();
+    }
+    
+    cameraInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            handleScan(file);
+        }
+    });
     
     // Установка режима
     function setAction(action) {
@@ -496,69 +531,7 @@
     
     setAddModeBtn.addEventListener('click', () => setAction('add'));
     setRemoveModeBtn.addEventListener('click', () => setAction('remove'));
-    
-    // Камера
-    async function startCamera() {
-        if (scanningActive) return;
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            videoStream = stream;
-            videoEl.srcObject = stream;
-            await videoEl.play();
-            scanningActive = true;
-            showToast('📷 Камера включена', 'success');
-            loadQrScanner();
-        } catch(err) {
-            showToast('❌ Нет доступа к камере: ' + err.message, 'error');
-        }
-    }
-    
-    function stopCamera() {
-        if (videoStream) {
-            videoStream.getTracks().forEach(track => track.stop());
-            videoStream = null;
-        }
-        videoEl.srcObject = null;
-        scanningActive = false;
-        if (scanFrameId) cancelAnimationFrame(scanFrameId);
-        showToast('⏹️ Камера выключена', 'info');
-    }
-    
-    function loadQrScanner() {
-        if (window.jsQR) {
-            startQrScanLoop();
-            return;
-        }
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
-        script.onload = () => startQrScanLoop();
-        document.head.appendChild(script);
-    }
-    
-    function startQrScanLoop() {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        function scanFrame() {
-            if (!scanningActive || !videoEl.videoWidth) {
-                scanFrameId = requestAnimationFrame(scanFrame);
-                return;
-            }
-            canvas.width = videoEl.videoWidth;
-            canvas.height = videoEl.videoHeight;
-            ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" });
-            if (code && code.data) {
-                processScannedValue(code.data);
-            }
-            scanFrameId = requestAnimationFrame(scanFrame);
-        }
-        if (scanFrameId) cancelAnimationFrame(scanFrameId);
-        scanFrameId = requestAnimationFrame(scanFrame);
-    }
-    
-    startCameraBtn.addEventListener('click', startCamera);
-    stopCameraBtn.addEventListener('click', stopCamera);
+    scanPhotoBtn.addEventListener('click', openCamera);
     
     // Экспорт
     function generateXML() {
@@ -619,11 +592,9 @@
     
     async function finishTask() {
         if (await exportTask()) {
-            stopCamera();
             currentTaskNumber = null;
             scannedValues = [];
             currentAction = null;
-            lastScannedValue = null;
             actionModeDisplay.innerHTML = '⚡ Выберите действие';
             actionModeDisplay.style.background = '#e0e0e0';
             actionModeDisplay.style.color = '#333';
@@ -641,7 +612,6 @@
         currentTaskNumber = taskNum;
         scannedValues = [];
         currentAction = null;
-        lastScannedValue = null;
         actionModeDisplay.innerHTML = '⚡ Выберите действие';
         actionModeDisplay.style.background = '#e0e0e0';
         actionModeDisplay.style.color = '#333';
@@ -654,11 +624,9 @@
     
     function closeTask() {
         if (confirm('Закрыть задание? Данные будут потеряны.')) {
-            stopCamera();
             currentTaskNumber = null;
             scannedValues = [];
             currentAction = null;
-            lastScannedValue = null;
             startScreen.style.display = 'block';
             mainScreen.style.display = 'none';
             taskNumberInput.value = '';

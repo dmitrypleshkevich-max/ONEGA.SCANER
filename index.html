@@ -1,734 +1,188 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>ONEGA ТСД Сканер</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: #f5f5f5;
-            margin: 0;
-            padding: 16px;
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 700px;
-            margin: 0 auto;
-        }
-        
-        .card {
-            background: #FFFFFF;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e0e0e0;
-        }
-        
-        .card-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #C62828;
-            margin-bottom: 16px;
-            border-left: 4px solid #C62828;
-            padding-left: 12px;
-        }
-        
-        .input-group {
-            margin-bottom: 16px;
-        }
-        
-        label {
-            display: block;
-            color: #333;
-            font-size: 0.85rem;
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
-        
-        input {
-            width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            border: 1px solid #d0d0d0;
-            background: #FFFFFF;
-            color: #333;
-            font-size: 1rem;
-        }
-        
-        .btn {
-            padding: 14px 20px;
-            border-radius: 40px;
-            font-weight: 700;
-            font-size: 1rem;
-            border: none;
-            cursor: pointer;
-            text-align: center;
-            transition: 0.2s;
-        }
-        
-        .btn:active {
-            transform: scale(0.97);
-        }
-        
-        .btn-red {
-            background: #C62828;
-            color: white;
-        }
-        
-        .btn-outline-red {
-            background: transparent;
-            border: 2px solid #C62828;
-            color: #C62828;
-        }
-        
-        .btn-dark {
-            background: #2c3e50;
-            color: white;
-        }
-        
-        .btn-green {
-            background: #27ae60;
-            color: white;
-        }
-        
-        .flex {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        
-        .flex-between {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .scan-list {
-            max-height: 280px;
-            overflow-y: auto;
-            margin-top: 12px;
-        }
-        
-        .scan-item {
-            background: #FFFFFF;
-            margin: 8px 0;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-family: monospace;
-            font-size: 0.9rem;
-            border-left: 4px solid #C62828;
-            color: #333;
-            word-break: break-all;
-        }
-        
-        .scan-number {
-            background: #C62828;
-            border-radius: 20px;
-            padding: 2px 10px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            margin-right: 10px;
-            display: inline-block;
-            color: white;
-        }
-        
-        .counter {
-            font-size: 3rem;
-            font-weight: 700;
-            color: #C62828;
-            text-align: center;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .logo {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #C62828;
-            letter-spacing: 1px;
-        }
-        
-        .logo-sub {
-            font-size: 0.7rem;
-            color: #757575;
-        }
-        
-        .toast-container {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
-            pointer-events: none;
-        }
-        
-        .toast {
-            background: #1e293b;
-            color: white;
-            padding: 16px 24px;
-            border-radius: 60px;
-            font-size: 1rem;
-            font-weight: 600;
-            text-align: center;
-            animation: fadeInOut 2s ease forwards;
-            max-width: 90vw;
-            word-break: break-word;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-        
-        .toast.success { background: #27ae60; }
-        .toast.error { background: #C62828; }
-        .toast.info { background: #2c3e50; }
-        
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: scale(0.9); }
-            15% { opacity: 1; transform: scale(1); }
-            85% { opacity: 1; transform: scale(1); }
-            100% { opacity: 0; transform: scale(0.9); }
-        }
-        
-        .mode-badge {
-            background: #C62828;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 40px;
-            font-size: 0.8rem;
-            display: inline-block;
-        }
-        
-        .tsd-hint {
-            background: #f0f0f0;
-            padding: 16px;
-            border-radius: 12px;
-            text-align: center;
-        }
-        
-        #cameraInput {
-            display: none;
-        }
-        
-        .action-status {
-            margin-top: 12px;
-            padding: 12px;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: bold;
-            background: #e0e0e0;
-            color: #333;
-        }
-        
-        .action-status.add {
-            background: #27ae60;
-            color: white;
-        }
-        
-        .action-status.remove {
-            background: #C62828;
-            color: white;
-        }
-        
-        .mode-selector {
-            margin-top: 16px;
-        }
-        
-        .last-scan {
-            font-size: 0.8rem;
-            color: #C62828;
-            margin-top: 8px;
-        }
-    </style>
-</head>
-<body>
-<div class="container">
-    <div class="header">
-        <div class="logo">ONEGA</div>
-        <div class="logo-sub">Логистика · Сканер ТСД</div>
-    </div>
-
-    <!-- СТАРТОВЫЙ ЭКРАН -->
-    <div id="startScreen" class="card">
-        <div class="card-title">📋 Новое задание</div>
-        <div class="input-group">
-            <label>🔢 Номер задания / заказа</label>
-            <input type="text" id="taskNumberInput" placeholder="например: ON-001" autocomplete="off">
-        </div>
-        <div class="mode-selector">
-            <div class="flex">
-                <button id="tsdModeBtn" class="btn btn-dark" style="flex:1;">🎯 ТСД / ПК<br><span style="font-size: 0.7rem;">(лазерный сканер)</span></button>
-                <button id="photoModeBtn" class="btn btn-green" style="flex:1;">📷 СМАРТФОН<br><span style="font-size: 0.7rem;">(камера)</span></button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ОСНОВНОЙ ЭКРАН -->
-    <div id="mainScreen" style="display: none;">
-        <!-- Шапка задания -->
-        <div class="card">
-            <div class="flex-between">
-                <div>
-                    <div style="font-size: 0.75rem; color:#757575;">Текущее задание</div>
-                    <div style="font-size: 1.3rem; font-weight: 700; color:#C62828;" id="currentTaskDisplay">—</div>
-                    <div style="margin-top: 8px;" id="modeDisplay"></div>
-                </div>
-                <button id="closeTaskBtn" class="btn btn-outline-red" style="padding: 8px 16px;">✖️ Закрыть</button>
-            </div>
-        </div>
-
-        <!-- Счётчик -->
-        <div class="card">
-            <div class="card-title">📊 Счётчик</div>
-            <div class="counter" id="counterValue">0</div>
-            <div style="text-align: center; font-size: 0.8rem; color:#757575;">отсканировано в задании</div>
-        </div>
-
-        <!-- Выбор действия (ОБЯЗАТЕЛЬНО) -->
-        <div class="card">
-            <div class="card-title">🎯 Выберите действие</div>
-            <div class="flex">
-                <button id="setAddActionBtn" class="btn btn-green" style="flex:1;">➕ ДОБАВИТЬ</button>
-                <button id="setRemoveActionBtn" class="btn btn-outline-red" style="flex:1;">➖ ИСКЛЮЧИТЬ</button>
-            </div>
-            <div id="actionStatus" class="action-status">
-                ⚡ Не выбрано
-            </div>
-        </div>
-
-        <!-- Блок для СМАРТФОНА (камера) -->
-        <div id="photoBlock" class="card">
-            <div class="card-title">📷 Сканирование камерой</div>
-            <button id="scanPhotoBtn" class="btn btn-green" style="width: 100%; padding: 16px;">📷 СКАНИРОВАТЬ</button>
-            <div style="font-size: 0.7rem; color:#757575; text-align: center; margin-top: 8px;">
-                Нажмите кнопку и сфотографируйте QR, штрих-код или DataMatrix
-            </div>
-            <input type="file" id="cameraInput" accept="image/*" capture="environment">
-        </div>
-
-        <!-- Блок для ТСД / ПК (лазерный сканер) -->
-        <div id="tsdBlock" class="card" style="display: none;">
-            <div class="card-title">🎯 Сканирование ТСД</div>
-            <div class="tsd-hint">
-                🖨️ Готов к приёму сканов<br>
-                <small>Наведите лазерный сканер на штрих-код</small>
-                <div id="lastTsdScan" class="last-scan"></div>
-            </div>
-        </div>
-
-        <!-- Список отсканированных значений -->
-        <div class="card">
-            <div class="flex-between">
-                <div class="card-title" style="margin-bottom: 0;">📦 Список значений</div>
-                <button id="clearAllBtn" class="btn btn-outline-red" style="padding: 6px 12px;">🗑️ Очистить всё</button>
-            </div>
-            <div id="scanListContainer" class="scan-list">
-                <div style="text-align:center; padding: 30px; color:#757575;">— пока нет значений —</div>
-            </div>
-        </div>
-
-        <!-- Завершение задания -->
-        <div class="card">
-            <button id="finishTaskBtn" class="btn btn-red" style="width: 100%;">✅ ЗАВЕРШИТЬ ЗАДАНИЕ</button>
-        </div>
-    </div>
-</div>
-
-<div id="toastContainer" class="toast-container"></div>
-
-<!-- Скрытое поле для ТСД (всегда в фокусе) -->
-<input type="text" id="tsdHiddenInput" style="position: fixed; top: -100px; left: 0; opacity: 0;">
-
-<!-- Подключаем ZXing для распознавания всех типов штрих-кодов -->
-<script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
-
-<script>
-    // ========== TOAST-УВЕДОМЛЕНИЯ ==========
-    function showToast(message, type = 'info') {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.textContent = message;
-        container.appendChild(toast);
-        setTimeout(() => toast.remove(), 2000);
-        if (navigator.vibrate) navigator.vibrate(50);
-    }
-
-    // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
-    let currentTask = null;           // номер задания
-    let scannedItems = [];            // массив значений
-    let currentAction = null;         // 'add' или 'remove'
-    let currentMode = null;           // 'tsd' или 'photo'
-    let isProcessing = false;         // блокировка при обработке фото
+// ========== УЛУЧШЕННОЕ РАСПОЗНАВАНИЕ ДЛЯ QR, DATAMATRIX, ШТРИХ-КОДОВ ==========
+async function decodeFromImageWithEnhancement(file) {
+    await initZXing();
     
-    // ZXing для распознавания
-    let zxingReader = null;
+    // Явно указываем поддерживаемые форматы для лучшего распознавания
+    const hints = new Map();
+    const formats = [
+        ZXing.BarcodeFormat.QR_CODE,
+        ZXing.BarcodeFormat.DATA_MATRIX,
+        ZXing.BarcodeFormat.EAN_13,
+        ZXing.BarcodeFormat.EAN_8,
+        ZXing.BarcodeFormat.CODE_128,
+        ZXing.BarcodeFormat.CODE_39,
+        ZXing.BarcodeFormat.UPC_A,
+        ZXing.BarcodeFormat.UPC_E,
+        ZXing.BarcodeFormat.ITF,
+        ZXing.BarcodeFormat.PDF_417,
+        ZXing.BarcodeFormat.AZTEC,
+        ZXing.BarcodeFormat.CODABAR
+    ];
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
     
-    // DOM элементы
-    const startScreen = document.getElementById('startScreen');
-    const mainScreen = document.getElementById('mainScreen');
-    const taskNumberInput = document.getElementById('taskNumberInput');
-    const tsdModeBtn = document.getElementById('tsdModeBtn');
-    const photoModeBtn = document.getElementById('photoModeBtn');
-    const closeTaskBtn = document.getElementById('closeTaskBtn');
-    const finishTaskBtn = document.getElementById('finishTaskBtn');
-    const currentTaskDisplay = document.getElementById('currentTaskDisplay');
-    const modeDisplay = document.getElementById('modeDisplay');
-    const counterValue = document.getElementById('counterValue');
-    const setAddActionBtn = document.getElementById('setAddActionBtn');
-    const setRemoveActionBtn = document.getElementById('setRemoveActionBtn');
-    const actionStatus = document.getElementById('actionStatus');
-    const photoBlock = document.getElementById('photoBlock');
-    const tsdBlock = document.getElementById('tsdBlock');
-    const scanPhotoBtn = document.getElementById('scanPhotoBtn');
-    const cameraInput = document.getElementById('cameraInput');
-    const tsdHiddenInput = document.getElementById('tsdHiddenInput');
-    const lastTsdScan = document.getElementById('lastTsdScan');
-    const scanListContainer = document.getElementById('scanListContainer');
-    const clearAllBtn = document.getElementById('clearAllBtn');
+    // Загружаем изображение
+    const img = await new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error('Ошибка загрузки изображения'));
+        image.src = URL.createObjectURL(file);
+    });
     
-    // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
-    function updateList() {
-        counterValue.textContent = scannedItems.length;
-        if (scannedItems.length === 0) {
-            scanListContainer.innerHTML = '<div style="text-align:center; padding: 30px; color:#757575;">— пока нет значений —</div>';
-            return;
-        }
-        let html = '';
-        scannedItems.forEach((value, index) => {
-            html += `<div class="scan-item"><span class="scan-number">${index + 1}</span> ${escapeHtml(value)}</div>`;
-        });
-        scanListContainer.innerHTML = html;
-    }
+    const isEnhanceMode = enhanceModeCheckbox && enhanceModeCheckbox.checked;
     
-    function escapeHtml(str) {
-        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
-    }
+    // Создаём ридер с хинтами
+    const readerWithHints = new ZXing.MultiFormatReader();
+    readerWithHints.setHints(hints);
     
-    function escapeXml(str) {
-        return str.replace(/[<>&]/g, m => m === '<' ? '&lt;' : m === '>' ? '&gt;' : '&amp;');
-    }
-    
-    // ========== ДЕЙСТВИЯ С ДАННЫМИ ==========
-    function addItem(value) {
-        if (!value || value.trim() === '') return false;
-        value = value.trim();
-        if (scannedItems.includes(value)) {
-            showToast(`⚠️ "${value}" уже есть в списке`, 'error');
-            return false;
-        }
-        scannedItems.push(value);
-        updateList();
-        showToast(`✅ Добавлено: ${value}`, 'success');
-        return true;
-    }
-    
-    function removeItem(value) {
-        if (!value || value.trim() === '') return false;
-        value = value.trim();
-        const index = scannedItems.indexOf(value);
-        if (index === -1) {
-            showToast(`❌ "${value}" не найдено в списке`, 'error');
-            return false;
-        }
-        scannedItems.splice(index, 1);
-        updateList();
-        showToast(`🗑️ Исключено: ${value}`, 'info');
-        return true;
-    }
-    
-    function executeAction(value) {
-        if (!currentAction) {
-            showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
-            return false;
-        }
-        if (currentAction === 'add') return addItem(value);
-        if (currentAction === 'remove') return removeItem(value);
-        return false;
-    }
-    
-    // ========== ВЫБОР ДЕЙСТВИЯ (ДОБАВИТЬ / ИСКЛЮЧИТЬ) ==========
-    function setAction(action) {
-        currentAction = action;
-        if (action === 'add') {
-            actionStatus.textContent = '➕ РЕЖИМ: ДОБАВЛЕНИЕ';
-            actionStatus.className = 'action-status add';
-            showToast('Режим ДОБАВЛЕНИЯ активирован', 'info');
-        } else {
-            actionStatus.textContent = '➖ РЕЖИМ: ИСКЛЮЧЕНИЕ';
-            actionStatus.className = 'action-status remove';
-            showToast('Режим ИСКЛЮЧЕНИЯ активирован', 'info');
-        }
-        // В режиме ТСД возвращаем фокус
-        if (currentMode === 'tsd') {
-            setTimeout(() => tsdHiddenInput.focus(), 100);
-        }
-    }
-    
-    // ========== РЕЖИМ ФОТО (ZXing) ==========
-    async function initZXing() {
-        if (zxingReader) return true;
-        if (!window.ZXing) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            if (!window.ZXing) return false;
-        }
-        zxingReader = new ZXing.BrowserMultiFormatReader();
-        return true;
-    }
-    
-    async function decodeFromImage(file) {
-        await initZXing();
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = async () => {
-                try {
-                    const result = await zxingReader.decodeFromImageElement(img);
-                    resolve(result.getText());
-                } catch (e) {
-                    reject(new Error('Не распознан'));
-                }
-            };
-            img.onerror = () => reject(new Error('Ошибка загрузки'));
-            img.src = URL.createObjectURL(file);
-        });
-    }
-    
-    async function onPhotoSelected(file) {
-        if (isProcessing) {
-            showToast('⏳ Подождите, обрабатывается...', 'info');
-            return;
-        }
-        if (!currentAction) {
-            showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
-            return;
-        }
-        isProcessing = true;
-        showToast('🔍 Распознаю штрих-код...', 'info');
+    // Функция попытки распознавания с кастомным ридером
+    async function tryDecode(imageElement) {
         try {
-            const value = await decodeFromImage(file);
-            showToast(`📷 Распознано: ${value}`, 'info');
-            executeAction(value);
-        } catch (err) {
-            console.error(err);
-            showToast('❌ Не удалось распознать штрих-код. Попробуйте ещё раз.', 'error');
-        } finally {
-            isProcessing = false;
-            cameraInput.value = '';
+            // Получаем LuminanceSource из изображения
+            const canvas = document.createElement('canvas');
+            canvas.width = imageElement.width;
+            canvas.height = imageElement.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(imageElement, 0, 0);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const luminanceSource = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
+            const binaryBitmap = new ZXing.BinaryBitmap(new ZXing.GlobalHistogramBinarizer(luminanceSource));
+            
+            const result = readerWithHints.decodeWithState(binaryBitmap);
+            return result.getText();
+        } catch (e) {
+            return null;
         }
     }
     
-    cameraInput.addEventListener('change', (e) => {
-        if (e.target.files && e.target.files[0]) {
-            onPhotoSelected(e.target.files[0]);
-        }
-    });
-    
-    function openCamera() {
-        if (!currentAction) {
-            showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
-            return;
-        }
-        cameraInput.click();
-    }
-    
-    // ========== РЕЖИМ ТСД / ПК (клавиатура) ==========
-    let tsdFocusInterval = null;
-    
-    function setupTsdMode() {
-        if (tsdFocusInterval) clearInterval(tsdFocusInterval);
-        tsdHiddenInput.value = '';
-        tsdHiddenInput.focus();
+    // Специальная обработка для DataMatrix (адаптивная бинаризация)
+    function preprocessForDataMatrix(imgElement) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = imgElement.width;
+        canvas.height = imgElement.height;
+        ctx.drawImage(imgElement, 0, 0);
         
-        // Удерживаем фокус на скрытом поле
-        tsdFocusInterval = setInterval(() => {
-            if (currentMode === 'tsd' && document.activeElement !== tsdHiddenInput) {
-                tsdHiddenInput.focus();
-            }
-        }, 300);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
         
-        // Обработчик ввода с клавиатуры (сканер эмулирует Enter)
-        const onEnter = (e) => {
-            if (e.key === 'Enter') {
-                const value = tsdHiddenInput.value.trim();
-                if (value) {
-                    if (lastTsdScan) lastTsdScan.textContent = `✓ Последний скан: ${value}`;
-                    executeAction(value);
-                    tsdHiddenInput.value = '';
+        // Адаптивная пороговая обработка (разбиваем на блоки)
+        const blockSize = 32;
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        // Создаём массив яркости
+        const luminance = [];
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            luminance.push((r + g + b) / 3);
+        }
+        
+        // Для каждого пикселя вычисляем локальный порог
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const idx = y * width + x;
+                
+                // Суммируем яркость в блоке
+                let sum = 0;
+                let count = 0;
+                const x1 = Math.max(0, x - blockSize / 2);
+                const x2 = Math.min(width, x + blockSize / 2);
+                const y1 = Math.max(0, y - blockSize / 2);
+                const y2 = Math.min(height, y + blockSize / 2);
+                
+                for (let by = y1; by < y2; by++) {
+                    for (let bx = x1; bx < x2; bx++) {
+                        sum += luminance[by * width + bx];
+                        count++;
+                    }
                 }
-                e.preventDefault();
+                
+                const localThreshold = sum / count - 15; // небольшой сдвиг
+                const bw = luminance[idx] > localThreshold ? 255 : 0;
+                
+                const pixelIdx = idx * 4;
+                data[pixelIdx] = bw;
+                data[pixelIdx + 1] = bw;
+                data[pixelIdx + 2] = bw;
             }
-        };
-        tsdHiddenInput.removeEventListener('keypress', onEnter);
-        tsdHiddenInput.addEventListener('keypress', onEnter);
-    }
-    
-    function stopTsdMode() {
-        if (tsdFocusInterval) {
-            clearInterval(tsdFocusInterval);
-            tsdFocusInterval = null;
-        }
-    }
-    
-    // ========== УСТАНОВКА РЕЖИМА (ТСД или ФОТО) ==========
-    function setMode(mode) {
-        currentMode = mode;
-        if (mode === 'tsd') {
-            photoBlock.style.display = 'none';
-            tsdBlock.style.display = 'block';
-            modeDisplay.innerHTML = '<span class="mode-badge">🎯 Режим: ТСД / ПК (лазерный сканер)</span>';
-            setupTsdMode();
-        } else {
-            photoBlock.style.display = 'block';
-            tsdBlock.style.display = 'none';
-            modeDisplay.innerHTML = '<span class="mode-badge">📷 Режим: Смартфон (камера)</span>';
-            stopTsdMode();
-            initZXing();
-        }
-    }
-    
-    // ========== НАЧАЛО ЗАДАНИЯ ==========
-    function startTask(mode) {
-        const taskNum = taskNumberInput.value.trim();
-        if (!taskNum) {
-            showToast('❌ Введите номер задания', 'error');
-            return;
         }
         
-        currentTask = taskNum;
-        scannedItems = [];
-        currentAction = null;
-        
-        // Сброс UI действия
-        actionStatus.textContent = '⚡ Не выбрано';
-        actionStatus.className = 'action-status';
-        
-        currentTaskDisplay.textContent = currentTask;
-        updateList();
-        
-        setMode(mode);
-        
-        startScreen.style.display = 'none';
-        mainScreen.style.display = 'block';
-        showToast(`✅ Задание "${currentTask}" начато`, 'success');
+        ctx.putImageData(imageData, 0, 0);
+        return canvas;
     }
     
-    // ========== ЗАВЕРШЕНИЕ ЗАДАНИЯ (XML + экспорт) ==========
-    function generateXML() {
-        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-        xml += '<task>\n';
-        xml += `  <taskNumber>${escapeXml(currentTask)}</taskNumber>\n`;
-        xml += `  <timestamp>${new Date().toISOString()}</timestamp>\n`;
-        xml += `  <totalCount>${scannedItems.length}</totalCount>\n`;
-        xml += '  <items>\n';
-        scannedItems.forEach(value => {
-            xml += `    <item>${escapeXml(value)}</item>\n`;
+    // Усиление контраста с сохранением структуры (для QR и штрих-кодов)
+    function enhanceContrast(imgElement) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = imgElement.width;
+        canvas.height = imgElement.height;
+        ctx.drawImage(imgElement, 0, 0);
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        
+        // Находим min и max яркости для полного растяжения гистограммы
+        let minBrightness = 255;
+        let maxBrightness = 0;
+        
+        for (let i = 0; i < data.length; i += 4) {
+            const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            minBrightness = Math.min(minBrightness, brightness);
+            maxBrightness = Math.max(maxBrightness, brightness);
+        }
+        
+        // Растягиваем контраст на весь диапазон
+        const range = maxBrightness - minBrightness;
+        if (range > 0) {
+            for (let i = 0; i < data.length; i += 4) {
+                const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                const newBrightness = ((brightness - minBrightness) / range) * 255;
+                
+                data[i] = newBrightness;
+                data[i + 1] = newBrightness;
+                data[i + 2] = newBrightness;
+            }
+        }
+        
+        ctx.putImageData(imageData, 0, 0);
+        return canvas;
+    }
+    
+    // Собираем варианты для попыток (в порядке эффективности)
+    const attempts = [];
+    
+    // 1. Оригинал
+    attempts.push(() => tryDecode(img));
+    
+    if (isEnhanceMode) {
+        // 2. Растяжение контраста (хорошо для QR и штрих-кодов)
+        attempts.push(() => {
+            const enhanced = enhanceContrast(img);
+            return tryDecode(enhanced);
         });
-        xml += '  </items>\n';
-        xml += '</task>';
-        return xml;
-    }
-    
-    function downloadFile(content, filename) {
-        const blob = new Blob([content], {type: 'application/xml;charset=utf-8'});
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    }
-    
-    async function finishTask() {
-        if (!currentTask) return;
-        if (scannedItems.length === 0) {
-            showToast('⚠️ Нет данных для экспорта', 'error');
-            return;
-        }
         
-        const xmlContent = generateXML();
-        const filename = `ONEGA_${currentTask.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.xml`;
-        console.log('=== XML экспорт ===');
-        console.log(xmlContent);
+        // 3. Адаптивная бинаризация (лучше всего для DataMatrix с бликами)
+        attempts.push(() => {
+            const dmProcessed = preprocessForDataMatrix(img);
+            return tryDecode(dmProcessed);
+        });
         
-        // Если есть Web Share API (телефоны) — предлагаем поделиться
-        if (navigator.share) {
-            try {
-                const file = new File([xmlContent], filename, {type: 'application/xml'});
-                await navigator.share({
-                    title: 'ONEGA Задание',
-                    text: `${currentTask} (${scannedItems.length} позиций)`,
-                    files: [file]
-                });
-                showToast('📤 Файл отправлен', 'success');
-            } catch (e) {
-                if (e.name !== 'AbortError') {
-                    downloadFile(xmlContent, filename);
-                    showToast('💾 Файл сохранён', 'success');
-                }
-            }
-        } else {
-            // ПК или браузер без Web Share
-            downloadFile(xmlContent, filename);
-            showToast('💾 Файл сохранён', 'success');
-        }
+        // 4. Комбинированная: контраст + бинаризация
+        attempts.push(() => {
+            const contrasted = enhanceContrast(img);
+            const final = preprocessForDataMatrix(contrasted);
+            return tryDecode(final);
+        });
         
-        // Сброс и возврат на стартовый экран
-        stopTsdMode();
-        currentTask = null;
-        scannedItems = [];
-        currentAction = null;
-        currentMode = null;
-        startScreen.style.display = 'block';
-        mainScreen.style.display = 'none';
-        taskNumberInput.value = '';
-        updateList();
-    }
-    
-    function closeTask() {
-        if (confirm('Закрыть задание? Все несохранённые данные будут потеряны.')) {
-            stopTsdMode();
-            currentTask = null;
-            scannedItems = [];
-            currentAction = null;
-            currentMode = null;
-            startScreen.style.display = 'block';
-            mainScreen.style.display = 'none';
-            taskNumberInput.value = '';
-            showToast('🏠 Задание закрыто', 'info');
-        }
-    }
-    
-    // ========== НАВЕШИВАНИЕ ОБРАБОТЧИКОВ ==========
-    tsdModeBtn.addEventListener('click', () => startTask('tsd'));
-    photoModeBtn.addEventListener('click', () => startTask('photo'));
-    closeTaskBtn.addEventListener('click', closeTask);
-    finishTaskBtn.addEventListener('click', finishTask);
-    setAddActionBtn.addEventListener('click', () => setAction('add'));
-    setRemoveActionBtn.addEventListener('click', () => setAction('remove'));
-    scanPhotoBtn.addEventListener('click', openCamera);
-    
-    clearAllBtn.addEventListener('click', () => {
-        if (confirm(`Очистить все ${scannedItems.length} значений?`)) {
-            scannedItems = [];
-            updateList();
-            showToast('🗑️ Список очищен', 'info');
-        }
-    });
-    
-    // Предзагрузка ZXing
-    initZXing();
-    
-    // Начальное состояние
-    updateList();
-</script>
-</body>
-</html>
+        // 5. Масштабирование (увеличение для мелких кодов)
+        attempts.push(() => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width * 1.5;
+            canvas.height = img.height * 1.5;
+            ctx.drawImage(img

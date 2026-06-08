@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>ONEGA ТСД Сканер</title>
+    <title>ONEGA ТСД Сканер - QR</title>
     <style>
         * {
             box-sizing: border-box;
@@ -256,14 +256,14 @@
             margin: 4px 0;
         }
         
-        /* Стили для видео-сканера */
+        /* Стили для QR-сканера */
         .video-scanner-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             z-index: 2000;
             display: flex;
             flex-direction: column;
@@ -284,6 +284,7 @@
             width: 100%;
             height: auto;
             display: block;
+            transform: scaleX(-1); /* Зеркалим для удобства наведения */
         }
         
         .scan-frame {
@@ -291,11 +292,11 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 80%;
+            width: 70%;
             height: 30%;
             border: 3px solid #27ae60;
             border-radius: 16px;
-            box-shadow: 0 0 0 2000px rgba(0,0,0,0.5);
+            box-shadow: 0 0 0 2000px rgba(0,0,0,0.6);
             pointer-events: none;
         }
         
@@ -354,25 +355,19 @@
             color: white;
             text-align: center;
             margin-top: 10px;
-            font-size: 0.8rem;
-        }
-        
-        .camera-select {
-            background: #2c3e50;
-            color: white;
-            border: none;
+            font-size: 0.9rem;
+            font-weight: bold;
+            background: rgba(0,0,0,0.7);
             padding: 8px 16px;
             border-radius: 40px;
-            margin-top: 10px;
-            font-size: 0.8rem;
         }
         
-        .btn-icon {
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 8px;
+        .scanner-debug {
+            color: #aaa;
+            text-align: center;
+            margin-top: 8px;
+            font-size: 0.7rem;
+            font-family: monospace;
         }
     </style>
 </head>
@@ -380,10 +375,9 @@
 <div class="container">
     <div class="header">
         <div class="logo">ONEGA</div>
-        <div class="logo-sub">Логистика · Сканер ТСД</div>
+        <div class="logo-sub">Логистика · QR-сканер</div>
     </div>
 
-    <!-- СТАРТОВЫЙ ЭКРАН -->
     <div id="startScreen" class="card">
         <div class="card-title">📋 Новое задание</div>
         <div class="input-group">
@@ -393,12 +387,11 @@
         <div class="mode-selector">
             <div class="flex">
                 <button id="tsdModeBtn" class="btn btn-dark" style="flex:1;">🎯 ТСД / ПК<br><span style="font-size: 0.7rem;">(лазерный сканер)</span></button>
-                <button id="photoModeBtn" class="btn btn-green" style="flex:1;">📷 СМАРТФОН<br><span style="font-size: 0.7rem;">(видео-сканер)</span></button>
+                <button id="photoModeBtn" class="btn btn-green" style="flex:1;">📷 QR-СКАНЕР<br><span style="font-size: 0.7rem;">(камера)</span></button>
             </div>
         </div>
     </div>
 
-    <!-- ОСНОВНОЙ ЭКРАН -->
     <div id="mainScreen" style="display: none;">
         <div class="card">
             <div class="flex-between">
@@ -414,7 +407,7 @@
         <div class="card">
             <div class="card-title">📊 Счётчик</div>
             <div class="counter" id="counterValue">0</div>
-            <div style="text-align: center; font-size: 0.8rem; color:#757575;">отсканировано в задании</div>
+            <div style="text-align: center; font-size: 0.8rem; color:#757575;">отсканировано QR-кодов</div>
         </div>
 
         <div class="card">
@@ -428,21 +421,19 @@
             </div>
         </div>
 
-        <!-- Блок для СМАРТФОНА (видео-сканер) -->
         <div id="photoBlock" class="card">
-            <div class="card-title">📷 Видео-сканер</div>
-            <button id="scanPhotoBtn" class="btn btn-green" style="width: 100%; padding: 16px;">🎥 ОТКРЫТЬ КАМЕРУ</button>
+            <div class="card-title">📷 QR-сканер</div>
+            <button id="scanPhotoBtn" class="btn btn-green" style="width: 100%; padding: 16px;">🎥 ОТКРЫТЬ КАМЕРУ ДЛЯ QR</button>
             
             <div class="scan-tips">
-                <p>💡 <strong>Как работает:</strong></p>
-                <p>• Наведите камеру на QR, DataMatrix или штрих-код</p>
-                <p>• Как только код распознается — сканирование завершится автоматически</p>
-                <p>• Поддерживаются все форматы</p>
-                <p>• Работает даже с бликами на плёнке</p>
+                <p>💡 <strong>Как сканировать QR-код:</strong></p>
+                <p>• Наведите камеру на QR-код</p>
+                <p>• Дождитесь автоматического распознавания</p>
+                <p>• Камера закроется сама после успешного скана</p>
+                <p>• QR-код должен быть чётким и хорошо освещённым</p>
             </div>
         </div>
 
-        <!-- Блок для ТСД -->
         <div id="tsdBlock" class="card" style="display: none;">
             <div class="card-title">🎯 Сканирование ТСД</div>
             <div class="tsd-hint">
@@ -454,7 +445,7 @@
 
         <div class="card">
             <div class="flex-between">
-                <div class="card-title" style="margin-bottom: 0;">📦 Список значений</div>
+                <div class="card-title" style="margin-bottom: 0;">📦 Список QR-значений</div>
                 <button id="clearAllBtn" class="btn btn-outline-red" style="padding: 6px 12px;">🗑️ Очистить всё</button>
             </div>
             <div id="scanListContainer" class="scan-list">
@@ -470,10 +461,8 @@
 
 <div id="toastContainer" class="toast-container"></div>
 
-<!-- Скрытое поле для ТСД -->
 <input type="text" id="tsdHiddenInput" style="position: fixed; top: -100px; left: 0; opacity: 0;">
 
-<!-- ZXing -->
 <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 
 <script>
@@ -498,9 +487,9 @@
     let videoScannerActive = false;
     let zxingReader = null;
     let currentStream = null;
-    let scanAnimationFrame = null;
+    let scanInterval = null;
     
-    // DOM элементы
+    // DOM
     const startScreen = document.getElementById('startScreen');
     const mainScreen = document.getElementById('mainScreen');
     const taskNumberInput = document.getElementById('taskNumberInput');
@@ -522,7 +511,7 @@
     const scanListContainer = document.getElementById('scanListContainer');
     const clearAllBtn = document.getElementById('clearAllBtn');
     
-    // ========== ОБНОВЛЕНИЕ ==========
+    // ========== UI ==========
     function updateList() {
         counterValue.textContent = scannedItems.length;
         if (scannedItems.length === 0) {
@@ -598,20 +587,26 @@
         }
     }
     
-    // ========== ВИДЕО-СКАНЕР С АВТОЗАКРЫТИЕМ ==========
+    // ========== QR-СКАНЕР НА CANVAS (стабильный) ==========
     async function initZXing() {
         if (zxingReader) return true;
         if (!window.ZXing) {
             await new Promise(resolve => setTimeout(resolve, 500));
             if (!window.ZXing) return false;
         }
-        zxingReader = new ZXing.BrowserMultiFormatReader();
+        // Настраиваем только на QR-коды
+        const hints = new Map();
+        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
+        hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+        
+        zxingReader = new ZXing.MultiFormatReader();
+        zxingReader.setHints(hints);
         return true;
     }
     
-    async function startVideoScanner() {
+    async function startQRScanner() {
         if (!currentAction) {
-            showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
+            showToast('⚠️ Сначала выберите действие', 'error');
             return;
         }
         
@@ -627,84 +622,112 @@
                     <div class="scan-line"></div>
                 </div>
             </div>
-            <div class="scanner-status" id="scannerStatus">🎯 Наведите на код... автоматически распознается</div>
-            <button class="close-scanner" id="closeScannerBtn">✖️ Закрыть камеру</button>
+            <div class="scanner-status" id="scannerStatus">🎯 Наведите на QR-код...</div>
+            <div class="scanner-debug" id="scannerDebug">Ожидание камеры...</div>
+            <button class="close-scanner" id="closeScannerBtn">✖️ Закрыть</button>
         `;
         document.body.appendChild(overlay);
         
         const video = document.getElementById('scannerVideo');
         const statusDiv = document.getElementById('scannerStatus');
-        let isDecoding = false;
-        let decodedValue = null;
+        const debugDiv = document.getElementById('scannerDebug');
         
-        // Запрашиваем камеру
+        let decoded = false;
+        let lastDecodeTime = 0;
+        const DECODE_INTERVAL = 200; // мс между попытками
+        
+        // Ограничиваем разрешение для скорости
+        const constraints = {
+            video: {
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        };
+        
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment' } 
-            });
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
             currentStream = stream;
             video.srcObject = stream;
             await video.play();
-            statusDiv.textContent = '🔍 Распознаю... наведите на код';
             
-            // Функция сканирования кадра
-            async function scanFrame() {
-                if (!videoScannerActive || decodedValue || !video.videoWidth) {
-                    return;
-                }
+            statusDiv.textContent = '🔍 Анализируем кадры... наведите на QR';
+            debugDiv.textContent = 'Камера работает, запущен анализ...';
+            
+            // Создаём canvas для захвата кадров
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Функция захвата и анализа кадра
+            async function captureAndDecode() {
+                if (!videoScannerActive || decoded) return;
+                if (!video.videoWidth || !video.videoHeight) return;
                 
-                if (!isDecoding && video.readyState === video.HAVE_ENOUGH_DATA) {
-                    isDecoding = true;
-                    try {
-                        const result = await zxingReader.decodeFromVideoElement(video);
-                        if (result && result.getText()) {
-                            decodedValue = result.getText();
-                            statusDiv.textContent = `✅ Распознано: ${decodedValue}`;
-                            statusDiv.style.color = '#27ae60';
-                            
-                            // Выполняем действие
-                            executeAction(decodedValue);
-                            
-                            // Закрываем сканер через секунду
-                            setTimeout(() => {
-                                if (overlay && overlay.parentNode) {
-                                    closeVideoScanner(overlay);
-                                }
-                            }, 1000);
-                            return;
-                        }
-                    } catch (e) {
-                        // Ничего не распознано, продолжаем
+                const now = Date.now();
+                if (now - lastDecodeTime < DECODE_INTERVAL) return;
+                lastDecodeTime = now;
+                
+                // Захватываем текущий кадр
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                try {
+                    debugDiv.textContent = `Анализ кадра ${canvas.width}x${canvas.height}...`;
+                    
+                    // Пытаемся декодировать QR
+                    const result = await zxingReader.decodeFromImageElement(canvas);
+                    
+                    if (result && result.getText()) {
+                        const qrValue = result.getText();
+                        decoded = true;
+                        videoScannerActive = false;
+                        
+                        statusDiv.textContent = `✅ Распознан QR: ${qrValue.substring(0, 30)}${qrValue.length > 30 ? '...' : ''}`;
+                        statusDiv.style.color = '#27ae60';
+                        debugDiv.textContent = 'Распознано успешно!';
+                        
+                        // Выполняем действие
+                        executeAction(qrValue);
+                        
+                        // Закрываем сканер через 1.5 секунды
+                        setTimeout(() => {
+                            if (overlay && overlay.parentNode) {
+                                closeQRScanner(overlay);
+                            }
+                        }, 1500);
                     }
-                    isDecoding = false;
-                }
-                
-                // Продолжаем сканирование
-                if (videoScannerActive && !decodedValue) {
-                    scanAnimationFrame = requestAnimationFrame(scanFrame);
+                } catch (e) {
+                    // QR не найден на этом кадре
+                    debugDiv.textContent = `Сканирование... (QR не найден)`;
                 }
             }
             
+            // Запускаем периодический захват кадров
             videoScannerActive = true;
-            scanAnimationFrame = requestAnimationFrame(scanFrame);
+            scanInterval = setInterval(() => {
+                if (videoScannerActive && !decoded) {
+                    captureAndDecode();
+                }
+            }, DECODE_INTERVAL);
             
         } catch (err) {
             console.error('Camera error:', err);
-            statusDiv.textContent = '❌ Не удалось открыть камеру';
-            statusDiv.style.color = '#C62828';
+            statusDiv.textContent = '❌ Ошибка камеры';
+            debugDiv.textContent = 'Нет доступа к камере. Проверьте разрешения.';
             showToast('Не удалось получить доступ к камере', 'error');
         }
         
         // Закрытие по кнопке
         const closeBtn = overlay.querySelector('#closeScannerBtn');
-        closeBtn.addEventListener('click', () => closeVideoScanner(overlay));
+        closeBtn.addEventListener('click', () => closeQRScanner(overlay));
     }
     
-    function closeVideoScanner(overlay) {
+    function closeQRScanner(overlay) {
         videoScannerActive = false;
-        if (scanAnimationFrame) {
-            cancelAnimationFrame(scanAnimationFrame);
-            scanAnimationFrame = null;
+        if (scanInterval) {
+            clearInterval(scanInterval);
+            scanInterval = null;
         }
         if (currentStream) {
             currentStream.getTracks().forEach(track => track.stop());
@@ -715,7 +738,7 @@
         }
     }
     
-    // ========== ТСД МОД ==========
+    // ========== ТСД ==========
     let tsdFocusInterval = null;
     
     function setupTsdMode() {
@@ -757,12 +780,12 @@
         if (mode === 'tsd') {
             photoBlock.style.display = 'none';
             tsdBlock.style.display = 'block';
-            modeDisplay.innerHTML = '<span class="mode-badge">🎯 Режим: ТСД / ПК (лазерный сканер)</span>';
+            modeDisplay.innerHTML = '<span class="mode-badge">🎯 Режим: ТСД (лазерный сканер)</span>';
             setupTsdMode();
         } else {
             photoBlock.style.display = 'block';
             tsdBlock.style.display = 'none';
-            modeDisplay.innerHTML = '<span class="mode-badge">📷 Режим: Смартфон (видео-сканер)</span>';
+            modeDisplay.innerHTML = '<span class="mode-badge">📷 Режим: QR-сканер (камера)</span>';
             stopTsdMode();
         }
     }
@@ -851,12 +874,8 @@
         }
         
         stopTsdMode();
-        if (videoScannerActive) {
-            videoScannerActive = false;
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
-        }
+        if (scanInterval) clearInterval(scanInterval);
+        if (currentStream) currentStream.getTracks().forEach(track => track.stop());
         
         currentTask = null;
         scannedItems = [];
@@ -869,14 +888,11 @@
     }
     
     function closeTask() {
-        if (confirm('Закрыть задание? Все несохранённые данные будут потеряны.')) {
+        if (confirm('Закрыть задание? Все данные будут потеряны.')) {
             stopTsdMode();
-            if (videoScannerActive) {
-                videoScannerActive = false;
-                if (currentStream) {
-                    currentStream.getTracks().forEach(track => track.stop());
-                }
-            }
+            if (scanInterval) clearInterval(scanInterval);
+            if (currentStream) currentStream.getTracks().forEach(track => track.stop());
+            
             currentTask = null;
             scannedItems = [];
             currentAction = null;
@@ -895,7 +911,7 @@
     finishTaskBtn.addEventListener('click', finishTask);
     setAddActionBtn.addEventListener('click', () => setAction('add'));
     setRemoveActionBtn.addEventListener('click', () => setAction('remove'));
-    scanPhotoBtn.addEventListener('click', startVideoScanner);
+    scanPhotoBtn.addEventListener('click', startQRScanner);
     
     clearAllBtn.addEventListener('click', () => {
         if (confirm(`Очистить все ${scannedItems.length} значений?`)) {

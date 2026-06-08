@@ -211,10 +211,7 @@
             padding: 16px;
             border-radius: 12px;
             text-align: center;
-        }
-        
-        #cameraInput {
-            display: none;
+            font-size: 1.2rem;
         }
         
         .action-status {
@@ -242,36 +239,19 @@
         }
         
         .last-scan {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: #C62828;
-            margin-top: 8px;
+            margin-top: 12px;
+            font-family: monospace;
+            word-break: break-all;
         }
         
-        /* Новые стили для улучшенного сканирования */
-        .scan-tips {
-            background: #fff8e1;
-            border-left: 4px solid #ffc107;
-            padding: 12px;
-            margin-top: 12px;
+        .focus-hint {
+            background: #e3f2fd;
+            padding: 10px;
             border-radius: 8px;
             font-size: 0.75rem;
-        }
-        
-        .scan-tips p {
-            margin: 4px 0;
-        }
-        
-        .enhance-toggle {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 8px;
-            font-size: 0.8rem;
-        }
-        
-        .enhance-toggle input {
-            width: auto;
-            margin: 0;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -279,7 +259,7 @@
 <div class="container">
     <div class="header">
         <div class="logo">ONEGA</div>
-        <div class="logo-sub">Логистика · Сканер ТСД</div>
+        <div class="logo-sub">Логистика · ТСД Сканер</div>
     </div>
 
     <!-- СТАРТОВЫЙ ЭКРАН -->
@@ -292,14 +272,13 @@
         <div class="mode-selector">
             <div class="flex">
                 <button id="tsdModeBtn" class="btn btn-dark" style="flex:1;">🎯 ТСД / ПК<br><span style="font-size: 0.7rem;">(лазерный сканер)</span></button>
-                <button id="photoModeBtn" class="btn btn-green" style="flex:1;">📷 СМАРТФОН<br><span style="font-size: 0.7rem;">(камера)</span></button>
+                <button id="photoModeBtn" class="btn btn-green" style="flex:1;">📷 СМАРТФОН<br><span style="font-size: 0.7rem;">(камера - бета)</span></button>
             </div>
         </div>
     </div>
 
     <!-- ОСНОВНОЙ ЭКРАН -->
     <div id="mainScreen" style="display: none;">
-        <!-- Шапка задания -->
         <div class="card">
             <div class="flex-between">
                 <div>
@@ -311,14 +290,12 @@
             </div>
         </div>
 
-        <!-- Счётчик -->
         <div class="card">
             <div class="card-title">📊 Счётчик</div>
             <div class="counter" id="counterValue">0</div>
             <div style="text-align: center; font-size: 0.8rem; color:#757575;">отсканировано в задании</div>
         </div>
 
-        <!-- Выбор действия (ОБЯЗАТЕЛЬНО) -->
         <div class="card">
             <div class="card-title">🎯 Выберите действие</div>
             <div class="flex">
@@ -330,42 +307,31 @@
             </div>
         </div>
 
-        <!-- Блок для СМАРТФОНА (камера) -->
-        <div id="photoBlock" class="card">
-            <div class="card-title">📷 Сканирование камерой</div>
-            <button id="scanPhotoBtn" class="btn btn-green" style="width: 100%; padding: 16px;">📷 СКАНИРОВАТЬ</button>
-            
-            <!-- Улучшенные настройки -->
-            <div class="enhance-toggle">
-                <input type="checkbox" id="enhanceModeCheckbox" checked>
-                <label for="enhanceModeCheckbox" style="margin:0;">🔧 Улучшенный режим (против бликов)</label>
-            </div>
-            
-            <div class="scan-tips">
-                <p>💡 <strong>Советы для лучшего сканирования:</strong></p>
-                <p>• Держите камеру ровно, без сильного наклона</p>
-                <p>• При бликах — слегка измените угол телефона</p>
-                <p>• Обеспечьте равномерное освещение</p>
-                <p>• Код должен занимать ~70% кадра</p>
-            </div>
-            
-            <div style="font-size: 0.7rem; color:#757575; text-align: center; margin-top: 8px;">
-                Нажмите кнопку и сфотографируйте QR, штрих-код или DataMatrix
-            </div>
-            <input type="file" id="cameraInput" accept="image/*" capture="environment">
-        </div>
-
-        <!-- Блок для ТСД / ПК (лазерный сканер) -->
-        <div id="tsdBlock" class="card" style="display: none;">
+        <!-- Блок для ТСД -->
+        <div id="tsdBlock" class="card">
             <div class="card-title">🎯 Сканирование ТСД</div>
             <div class="tsd-hint">
-                🖨️ Готов к приёму сканов<br>
+                🖨️ СКАНЕР ГОТОВ<br>
                 <small>Наведите лазерный сканер на штрих-код</small>
+                <div class="focus-hint">
+                    💡 <strong>Важно:</strong> Убедитесь, что поле ввода активно<br>
+                    При сканировании звуковой сигнал означает успех
+                </div>
                 <div id="lastTsdScan" class="last-scan"></div>
             </div>
         </div>
 
-        <!-- Список отсканированных значений -->
+        <!-- Блок для фото (бета) -->
+        <div id="photoBlock" class="card" style="display: none;">
+            <div class="card-title">📷 Фото-сканер (бета)</div>
+            <button id="scanPhotoBtn" class="btn btn-green" style="width: 100%; padding: 16px;">📷 ОТКРЫТЬ КАМЕРУ</button>
+            <div class="scan-tips" style="background:#fff8e1; padding:12px; border-radius:8px; margin-top:12px; font-size:0.75rem;">
+                ⚠️ Режим камеры в разработке. Рекомендуется использовать ТСД.
+            </div>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment">
+        </div>
+
+        <!-- Список -->
         <div class="card">
             <div class="flex-between">
                 <div class="card-title" style="margin-bottom: 0;">📦 Список значений</div>
@@ -376,7 +342,6 @@
             </div>
         </div>
 
-        <!-- Завершение задания -->
         <div class="card">
             <button id="finishTaskBtn" class="btn btn-red" style="width: 100%;">✅ ЗАВЕРШИТЬ ЗАДАНИЕ</button>
         </div>
@@ -385,14 +350,11 @@
 
 <div id="toastContainer" class="toast-container"></div>
 
-<!-- Скрытое поле для ТСД (всегда в фокусе) -->
-<input type="text" id="tsdHiddenInput" style="position: fixed; top: -100px; left: 0; opacity: 0;">
-
-<!-- Подключаем улучшенные библиотеки для распознавания -->
-<script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+<!-- Скрытое поле для ТСД -->
+<input type="text" id="tsdHiddenInput" style="position: fixed; top: -100px; left: 0; opacity: 0;" autofocus>
 
 <script>
-    // ========== TOAST-УВЕДОМЛЕНИЯ ==========
+    // TOAST
     function showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
@@ -403,16 +365,13 @@
         if (navigator.vibrate) navigator.vibrate(50);
     }
 
-    // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+    // Глобальные переменные
     let currentTask = null;
     let scannedItems = [];
     let currentAction = null;
     let currentMode = null;
-    let isProcessing = false;
     
-    let zxingReader = null;
-    
-    // DOM элементы
+    // DOM
     const startScreen = document.getElementById('startScreen');
     const mainScreen = document.getElementById('mainScreen');
     const taskNumberInput = document.getElementById('taskNumberInput');
@@ -434,9 +393,8 @@
     const lastTsdScan = document.getElementById('lastTsdScan');
     const scanListContainer = document.getElementById('scanListContainer');
     const clearAllBtn = document.getElementById('clearAllBtn');
-    const enhanceModeCheckbox = document.getElementById('enhanceModeCheckbox');
     
-    // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
+    // Обновление списка
     function updateList() {
         counterValue.textContent = scannedItems.length;
         if (scannedItems.length === 0) {
@@ -458,269 +416,7 @@
         return str.replace(/[<>&]/g, m => m === '<' ? '&lt;' : m === '>' ? '&gt;' : '&amp;');
     }
     
-    // ========== УЛУЧШЕННАЯ ОБРАБОТКА ИЗОБРАЖЕНИЯ ДЛЯ БОРЬБЫ С БЛИКАМИ ==========
-    function preprocessImageForBarcode(imgElement) {
-        // Создаём canvas для обработки изображения
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        canvas.width = imgElement.width;
-        canvas.height = imgElement.height;
-        
-        // Рисуем оригинальное изображение
-        ctx.drawImage(imgElement, 0, 0);
-        
-        // Получаем данные пикселей
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-        
-        // Применяем улучшения для борьбы с бликами:
-        // 1. Повышаем контраст (усиливаем разницу между светлыми и тёмными областями)
-        // 2. Преобразуем в чёрно-белое с адаптивным порогом
-        
-        // Сначала вычисляем среднюю яркость для адаптивного порога
-        let sumBrightness = 0;
-        for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-            const brightness = (r + g + b) / 3;
-            sumBrightness += brightness;
-        }
-        const avgBrightness = sumBrightness / (data.length / 4);
-        
-        // Адаптивный порог: если изображение тёмное, порог ниже, если светлое — выше
-        const threshold = avgBrightness * 0.6;
-        
-        // Применяем обработку
-        for (let i = 0; i < data.length; i += 4) {
-            let r = data[i];
-            let g = data[i + 1];
-            let b = data[i + 2];
-            
-            // Повышение контраста (усиление)
-            let contrast = 1.5;
-            r = 128 + (r - 128) * contrast;
-            g = 128 + (g - 128) * contrast;
-            b = 128 + (b - 128) * contrast;
-            
-            // Ограничиваем значения
-            r = Math.min(255, Math.max(0, r));
-            g = Math.min(255, Math.max(0, g));
-            b = Math.min(255, Math.max(0, b));
-            
-            // Вычисляем яркость
-            const brightness = (r + g + b) / 3;
-            
-            // Бинаризация (чёрно-белое) — это сильно помогает при бликах
-            const bw = brightness > threshold ? 255 : 0;
-            
-            // Сохраняем бинаризированное изображение (для лучшего распознавания)
-            data[i] = bw;
-            data[i + 1] = bw;
-            data[i + 2] = bw;
-        }
-        
-        // Применяем изменения
-        ctx.putImageData(imageData, 0, 0);
-        
-        return canvas;
-    }
-    
-    // Альтернативная мягкая обработка (без полной бинаризации)
-    function softPreprocessImage(imgElement) {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        canvas.width = imgElement.width;
-        canvas.height = imgElement.height;
-        ctx.drawImage(imgElement, 0, 0);
-        
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-        
-        // Мягкое повышение контраста и уменьшение бликов
-        for (let i = 0; i < data.length; i += 4) {
-            let r = data[i];
-            let g = data[i + 1];
-            let b = data[i + 2];
-            
-            // Усиление контраста, но более мягкое
-            const contrast = 1.3;
-            r = 128 + (r - 128) * contrast;
-            g = 128 + (g - 128) * contrast;
-            b = 128 + (b - 128) * contrast;
-            
-            data[i] = Math.min(255, Math.max(0, r));
-            data[i + 1] = Math.min(255, Math.max(0, g));
-            data[i + 2] = Math.min(255, Math.max(0, b));
-        }
-        
-        ctx.putImageData(imageData, 0, 0);
-        return canvas;
-    }
-    
-    // ========== ИНИЦИАЛИЗАЦИЯ ZXing ==========
-    async function initZXing() {
-        if (zxingReader) return true;
-        if (!window.ZXing) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            if (!window.ZXing) return false;
-        }
-        zxingReader = new ZXing.BrowserMultiFormatReader();
-        return true;
-    }
-    
-    // ========== УЛУЧШЕННОЕ РАСПОЗНАВАНИЕ С МНОЖЕСТВЕННЫМИ ПОПЫТКАМИ ==========
-    async function decodeFromImageWithEnhancement(file) {
-        await initZXing();
-        
-        // Загружаем изображение
-        const img = await new Promise((resolve, reject) => {
-            const image = new Image();
-            image.onload = () => resolve(image);
-            image.onerror = () => reject(new Error('Ошибка загрузки изображения'));
-            image.src = URL.createObjectURL(file);
-        });
-        
-        const isEnhanceMode = enhanceModeCheckbox && enhanceModeCheckbox.checked;
-        
-        // Пытаемся распознать разными способами
-        const attempts = [];
-        
-        // Способ 1: Оригинальное изображение
-        attempts.push(async () => {
-            try {
-                const result = await zxingReader.decodeFromImageElement(img);
-                return result.getText();
-            } catch (e) {
-                return null;
-            }
-        });
-        
-        // Способ 2: Мягкая обработка (повышение контраста)
-        if (isEnhanceMode) {
-            attempts.push(async () => {
-                try {
-                    const softCanvas = softPreprocessImage(img);
-                    const result = await zxingReader.decodeFromImageElement(softCanvas);
-                    return result.getText();
-                } catch (e) {
-                    return null;
-                }
-            });
-        }
-        
-        // Способ 3: Агрессивная обработка (ч/б, высокая контрастность) — лучше всего против бликов
-        if (isEnhanceMode) {
-            attempts.push(async () => {
-                try {
-                    const enhancedCanvas = preprocessImageForBarcode(img);
-                    const result = await zxingReader.decodeFromImageElement(enhancedCanvas);
-                    return result.getText();
-                } catch (e) {
-                    return null;
-                }
-            });
-        }
-        
-        // Способ 4: Поворот изображения (иногда помогает при плохом угле)
-        if (isEnhanceMode) {
-            attempts.push(async () => {
-                try {
-                    const rotatedCanvas = document.createElement('canvas');
-                    const ctx = rotatedCanvas.getContext('2d');
-                    rotatedCanvas.width = img.height;
-                    rotatedCanvas.height = img.width;
-                    ctx.translate(rotatedCanvas.width / 2, rotatedCanvas.height / 2);
-                    ctx.rotate(Math.PI / 180 * 5); // лёгкий поворот на 5 градусов
-                    ctx.drawImage(img, -img.width / 2, -img.height / 2);
-                    
-                    const result = await zxingReader.decodeFromImageElement(rotatedCanvas);
-                    return result.getText();
-                } catch (e) {
-                    return null;
-                }
-            });
-        }
-        
-        // Последовательно пробуем все способы
-        for (const attempt of attempts) {
-            const result = await attempt();
-            if (result) {
-                URL.revokeObjectURL(img.src);
-                return result;
-            }
-        }
-        
-        URL.revokeObjectURL(img.src);
-        throw new Error('Не удалось распознать штрих-код даже после обработки');
-    }
-    
-    // ========== ФОТО-СКАНИРОВАНИЕ ==========
-    async function onPhotoSelected(file) {
-        if (isProcessing) {
-            showToast('⏳ Подождите, обрабатывается...', 'info');
-            return;
-        }
-        if (!currentAction) {
-            showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
-            return;
-        }
-        
-        isProcessing = true;
-        const isEnhanceMode = enhanceModeCheckbox && enhanceModeCheckbox.checked;
-        showToast(isEnhanceMode ? '🔍 Улучшенное распознавание (против бликов)...' : '🔍 Распознаю...', 'info');
-        
-        try {
-            let value;
-            if (isEnhanceMode) {
-                value = await decodeFromImageWithEnhancement(file);
-            } else {
-                await initZXing();
-                const img = new Image();
-                const result = await new Promise((resolve, reject) => {
-                    img.onload = async () => {
-                        try {
-                            const res = await zxingReader.decodeFromImageElement(img);
-                            resolve(res.getText());
-                        } catch (e) {
-                            reject(e);
-                        }
-                    };
-                    img.onerror = () => reject(new Error('Ошибка загрузки'));
-                    img.src = URL.createObjectURL(file);
-                });
-                value = result;
-                URL.revokeObjectURL(img.src);
-            }
-            
-            showToast(`📷 Распознано: ${value}`, 'success');
-            executeAction(value);
-        } catch (err) {
-            console.error(err);
-            showToast('❌ Не удалось распознать. Попробуйте изменить угол и убрать блики.', 'error');
-        } finally {
-            isProcessing = false;
-            cameraInput.value = '';
-        }
-    }
-    
-    cameraInput.addEventListener('change', (e) => {
-        if (e.target.files && e.target.files[0]) {
-            onPhotoSelected(e.target.files[0]);
-        }
-    });
-    
-    function openCamera() {
-        if (!currentAction) {
-            showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
-            return;
-        }
-        cameraInput.click();
-    }
-    
-    // ========== ДЕЙСТВИЯ С ДАННЫМИ ==========
+    // Действия
     function addItem(value) {
         if (!value || value.trim() === '') return false;
         value = value.trim();
@@ -750,4 +446,242 @@
     
     function executeAction(value) {
         if (!currentAction) {
-            showToast('⚠️
+            showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
+            return false;
+        }
+        if (currentAction === 'add') return addItem(value);
+        if (currentAction === 'remove') return removeItem(value);
+        return false;
+    }
+    
+    // Выбор действия
+    function setAction(action) {
+        currentAction = action;
+        if (action === 'add') {
+            actionStatus.textContent = '➕ РЕЖИМ: ДОБАВЛЕНИЕ';
+            actionStatus.className = 'action-status add';
+            showToast('Режим ДОБАВЛЕНИЯ активирован', 'info');
+        } else {
+            actionStatus.textContent = '➖ РЕЖИМ: ИСКЛЮЧЕНИЕ';
+            actionStatus.className = 'action-status remove';
+            showToast('Режим ИСКЛЮЧЕНИЯ активирован', 'info');
+        }
+        setTimeout(() => {
+            if (currentMode === 'tsd') {
+                tsdHiddenInput.focus();
+            }
+        }, 100);
+    }
+    
+    // ТСД режим
+    let tsdFocusInterval = null;
+    
+    function setupTsdMode() {
+        if (tsdFocusInterval) {
+            clearInterval(tsdFocusInterval);
+            tsdFocusInterval = null;
+        }
+        
+        tsdHiddenInput.value = '';
+        tsdHiddenInput.focus();
+        
+        tsdFocusInterval = setInterval(() => {
+            if (currentMode === 'tsd' && document.activeElement !== tsdHiddenInput) {
+                tsdHiddenInput.focus();
+            }
+        }, 300);
+        
+        const onScan = (e) => {
+            if (e.key === 'Enter') {
+                const value = tsdHiddenInput.value.trim();
+                if (value) {
+                    if (lastTsdScan) {
+                        lastTsdScan.textContent = `✓ Последний скан: ${value}`;
+                    }
+                    executeAction(value);
+                    tsdHiddenInput.value = '';
+                }
+                e.preventDefault();
+            }
+        };
+        
+        tsdHiddenInput.removeEventListener('keypress', onScan);
+        tsdHiddenInput.addEventListener('keypress', onScan);
+        
+        tsdHiddenInput.addEventListener('blur', () => {
+            if (currentMode === 'tsd') {
+                setTimeout(() => tsdHiddenInput.focus(), 100);
+            }
+        });
+    }
+    
+    function stopTsdMode() {
+        if (tsdFocusInterval) {
+            clearInterval(tsdFocusInterval);
+            tsdFocusInterval = null;
+        }
+    }
+    
+    // Установка режима
+    function setMode(mode) {
+        currentMode = mode;
+        if (mode === 'tsd') {
+            photoBlock.style.display = 'none';
+            tsdBlock.style.display = 'block';
+            modeDisplay.innerHTML = '<span class="mode-badge">🎯 Режим: ТСД / ПК (лазерный сканер)</span>';
+            setupTsdMode();
+        } else {
+            photoBlock.style.display = 'block';
+            tsdBlock.style.display = 'none';
+            modeDisplay.innerHTML = '<span class="mode-badge">📷 Режим: Смартфон (бета)</span>';
+            stopTsdMode();
+        }
+    }
+    
+    // Старт задания
+    function startTask(mode) {
+        const taskNum = taskNumberInput.value.trim();
+        if (!taskNum) {
+            showToast('❌ Введите номер задания', 'error');
+            return;
+        }
+        
+        currentTask = taskNum;
+        scannedItems = [];
+        currentAction = null;
+        
+        actionStatus.textContent = '⚡ Не выбрано';
+        actionStatus.className = 'action-status';
+        
+        currentTaskDisplay.textContent = currentTask;
+        updateList();
+        
+        setMode(mode);
+        
+        startScreen.style.display = 'none';
+        mainScreen.style.display = 'block';
+        showToast(`✅ Задание "${currentTask}" начато`, 'success');
+        
+        if (mode === 'tsd') {
+            showToast('🎯 ТСД режим активен. Сканируйте штрих-коды.', 'info');
+        }
+    }
+    
+    // Завершение задания
+    function generateXML() {
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xml += '<task>\n';
+        xml += `  <taskNumber>${escapeXml(currentTask)}</taskNumber>\n`;
+        xml += `  <timestamp>${new Date().toISOString()}</timestamp>\n`;
+        xml += `  <totalCount>${scannedItems.length}</totalCount>\n`;
+        xml += '  <items>\n';
+        scannedItems.forEach(value => {
+            xml += `    <item>${escapeXml(value)}</item>\n`;
+        });
+        xml += '  </items>\n';
+        xml += '</task>';
+        return xml;
+    }
+    
+    function downloadFile(content, filename) {
+        const blob = new Blob([content], {type: 'application/xml;charset=utf-8'});
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+    
+    async function finishTask() {
+        if (!currentTask) return;
+        if (scannedItems.length === 0) {
+            showToast('⚠️ Нет данных для экспорта', 'error');
+            return;
+        }
+        
+        const xmlContent = generateXML();
+        const filename = `ONEGA_${currentTask.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.xml`;
+        
+        console.log('=== XML экспорт ===');
+        console.log(xmlContent);
+        
+        if (navigator.share) {
+            try {
+                const file = new File([xmlContent], filename, {type: 'application/xml'});
+                await navigator.share({
+                    title: 'ONEGA Задание',
+                    text: `${currentTask} (${scannedItems.length} позиций)`,
+                    files: [file]
+                });
+                showToast('📤 Файл отправлен', 'success');
+            } catch (e) {
+                if (e.name !== 'AbortError') {
+                    downloadFile(xmlContent, filename);
+                    showToast('💾 Файл сохранён', 'success');
+                }
+            }
+        } else {
+            downloadFile(xmlContent, filename);
+            showToast('💾 Файл сохранён', 'success');
+        }
+        
+        stopTsdMode();
+        currentTask = null;
+        scannedItems = [];
+        currentAction = null;
+        currentMode = null;
+        startScreen.style.display = 'block';
+        mainScreen.style.display = 'none';
+        taskNumberInput.value = '';
+        updateList();
+    }
+    
+    function closeTask() {
+        if (confirm('Закрыть задание? Все несохранённые данные будут потеряны.')) {
+            stopTsdMode();
+            currentTask = null;
+            scannedItems = [];
+            currentAction = null;
+            currentMode = null;
+            startScreen.style.display = 'block';
+            mainScreen.style.display = 'none';
+            taskNumberInput.value = '';
+            showToast('🏠 Задание закрыто', 'info');
+        }
+    }
+    
+    // Обработчики
+    tsdModeBtn.addEventListener('click', () => startTask('tsd'));
+    photoModeBtn.addEventListener('click', () => startTask('photo'));
+    closeTaskBtn.addEventListener('click', closeTask);
+    finishTaskBtn.addEventListener('click', finishTask);
+    setAddActionBtn.addEventListener('click', () => setAction('add'));
+    setRemoveActionBtn.addEventListener('click', () => setAction('remove'));
+    
+    if (scanPhotoBtn) {
+        scanPhotoBtn.addEventListener('click', () => {
+            showToast('📷 Режим камеры в разработке. Используйте сканер ТСД.', 'info');
+        });
+    }
+    
+    clearAllBtn.addEventListener('click', () => {
+        if (confirm(`Очистить все ${scannedItems.length} значений?`)) {
+            scannedItems = [];
+            updateList();
+            showToast('🗑️ Список очищен', 'info');
+        }
+    });
+    
+    updateList();
+    
+    setTimeout(() => {
+        if (startScreen.style.display !== 'none') {
+            taskNumberInput.focus();
+        }
+    }, 100);
+</script>
+</body>
+</html>

@@ -52,7 +52,7 @@
             font-weight: 500;
         }
         
-        input {
+        input, .scan-input {
             width: 100%;
             padding: 14px;
             border-radius: 12px;
@@ -225,12 +225,17 @@
             word-break: break-all;
         }
         
-        .focus-hint {
-            background: #e3f2fd;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            margin-top: 10px;
+        .scan-hint {
+            background: #e8f0fe;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-top: 12px;
+            text-align: center;
+        }
+        
+        .scan-hint strong {
+            color: #C62828;
         }
     </style>
 </head>
@@ -253,6 +258,7 @@
 
     <!-- ОСНОВНОЙ ЭКРАН -->
     <div id="mainScreen" style="display: none;">
+        <!-- Шапка задания -->
         <div class="card">
             <div class="flex-between">
                 <div>
@@ -263,12 +269,14 @@
             </div>
         </div>
 
+        <!-- Счётчик -->
         <div class="card">
             <div class="card-title">📊 Счётчик</div>
             <div class="counter" id="counterValue">0</div>
             <div style="text-align: center; font-size: 0.8rem; color:#757575;">отсканировано в задании</div>
         </div>
 
+        <!-- Выбор действия -->
         <div class="card">
             <div class="card-title">🎯 Выберите действие</div>
             <div class="flex">
@@ -282,24 +290,28 @@
 
         <!-- Поле для сканирования -->
         <div class="card">
-            <div class="card-title">🎯 Сканирование</div>
+            <div class="card-title">🎯 Сканирование ТСД</div>
             <div style="background: #f0f0f0; padding: 16px; border-radius: 12px; text-align: center;">
-                🖨️ СКАНЕР ГОТОВ<br>
-                <small>Нажмите на поле ввода → сканируйте штрих-код → Enter</small>
+                🖨️ СКАНЕР ГОТОВ
             </div>
             
-            <div style="margin-top: 12px;">
+            <div style="margin-top: 16px;">
                 <label>📷 Штрих-код:</label>
-                <input type="text" id="scanInput" placeholder="наведите лазер на штрих-код...">
+                <input type="text" id="scanInput" class="scan-input" placeholder="нажмите на поле, затем сканируйте...">
+            </div>
+            
+            <div class="scan-hint">
+                💡 <strong>Инструкция:</strong><br>
+                1. Кликните на поле выше<br>
+                2. Нажмите физическую кнопку сканирования на ТСД<br>
+                3. Штрих-код появится → нажмите Enter<br>
+                <span style="font-size: 0.7rem;">(Если настроен автоматический Enter — нажимать не нужно)</span>
             </div>
             
             <div id="lastTsdScan" class="last-scan"></div>
-            <div class="focus-hint">
-                💡 Кликните на поле выше, затем сканируйте. После сканирования нажмите Enter (или настройте DataWedge на автоматический Enter)
-            </div>
         </div>
 
-        <!-- Список -->
+        <!-- Список отсканированных значений -->
         <div class="card">
             <div class="flex-between">
                 <div class="card-title" style="margin-bottom: 0;">📦 Список значений</div>
@@ -310,6 +322,7 @@
             </div>
         </div>
 
+        <!-- Завершение задания -->
         <div class="card">
             <button id="finishTaskBtn" class="btn btn-red" style="width: 100%;">✅ ЗАВЕРШИТЬ ЗАДАНИЕ</button>
         </div>
@@ -319,7 +332,7 @@
 <div id="toastContainer" class="toast-container"></div>
 
 <script>
-    // TOAST
+    // ========== TOAST-УВЕДОМЛЕНИЯ ==========
     function showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
@@ -330,12 +343,12 @@
         if (navigator.vibrate) navigator.vibrate(50);
     }
 
-    // Глобальные переменные
+    // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
     let currentTask = null;
     let scannedItems = [];
     let currentAction = null;
     
-    // DOM
+    // ========== DOM ЭЛЕМЕНТЫ ==========
     const startScreen = document.getElementById('startScreen');
     const mainScreen = document.getElementById('mainScreen');
     const taskNumberInput = document.getElementById('taskNumberInput');
@@ -352,7 +365,7 @@
     const scanListContainer = document.getElementById('scanListContainer');
     const clearAllBtn = document.getElementById('clearAllBtn');
     
-    // Обновление списка
+    // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
     function updateList() {
         counterValue.textContent = scannedItems.length;
         if (scannedItems.length === 0) {
@@ -374,7 +387,7 @@
         return str.replace(/[<>&]/g, m => m === '<' ? '&lt;' : m === '>' ? '&gt;' : '&amp;');
     }
     
-    // Действия
+    // ========== ДЕЙСТВИЯ С ДАННЫМИ ==========
     function addItem(value) {
         if (!value || value.trim() === '') return false;
         value = value.trim();
@@ -422,9 +435,14 @@
         
         executeAction(value);
         scanInput.value = '';
+        
+        // Возвращаем фокус для следующего сканирования
+        setTimeout(() => {
+            scanInput.focus();
+        }, 100);
     }
     
-    // Выбор действия
+    // ========== ВЫБОР ДЕЙСТВИЯ ==========
     function setAction(action) {
         currentAction = action;
         if (action === 'add') {
@@ -441,7 +459,7 @@
         }, 100);
     }
     
-    // Старт задания
+    // ========== СТАРТ ЗАДАНИЯ ==========
     function startTask() {
         const taskNum = taskNumberInput.value.trim();
         if (!taskNum) {
@@ -470,7 +488,7 @@
         }, 500);
     }
     
-    // Завершение задания
+    // ========== ЗАВЕРШЕНИЕ ЗАДАНИЯ (XML + экспорт) ==========
     function generateXML() {
         let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
         xml += '<task>\n';
@@ -511,6 +529,7 @@
         console.log('=== XML экспорт ===');
         console.log(xmlContent);
         
+        // Если есть Web Share API (телефоны) — предлагаем поделиться
         if (navigator.share) {
             try {
                 const file = new File([xmlContent], filename, {type: 'application/xml'});
@@ -531,6 +550,7 @@
             showToast('💾 Файл сохранён', 'success');
         }
         
+        // Сброс и возврат на стартовый экран
         currentTask = null;
         scannedItems = [];
         currentAction = null;
@@ -538,6 +558,7 @@
         mainScreen.style.display = 'none';
         taskNumberInput.value = '';
         updateList();
+        showToast('🏁 Задание завершено', 'success');
     }
     
     function closeTask() {
@@ -552,19 +573,24 @@
         }
     }
     
-    // Обработчики
+    // ========== НАВЕШИВАНИЕ ОБРАБОТЧИКОВ ==========
     startTsdBtn.addEventListener('click', startTask);
     closeTaskBtn.addEventListener('click', closeTask);
     finishTaskBtn.addEventListener('click', finishTask);
     setAddActionBtn.addEventListener('click', () => setAction('add'));
     setRemoveActionBtn.addEventListener('click', () => setAction('remove'));
     
-    // Обработка сканирования
+    // Обработка сканирования (Enter)
     scanInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             processScan(scanInput.value);
             e.preventDefault();
         }
+    });
+    
+    // Клик на поле ввода для фокуса
+    scanInput.addEventListener('focus', () => {
+        scanInput.value = '';
     });
     
     clearAllBtn.addEventListener('click', () => {
@@ -575,6 +601,7 @@
         }
     });
     
+    // Начальное состояние
     updateList();
     
     setTimeout(() => {

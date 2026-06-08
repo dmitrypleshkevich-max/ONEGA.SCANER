@@ -3,632 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>ONEGA ТСД Сканер</title>
+    <title>ONEGA ТСД - Диагностика сканера</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: #f5f5f5;
-            margin: 0;
+            font-family: monospace;
+            background: #1a1a2e;
+            color: #eee;
             padding: 16px;
-            min-height: 100vh;
+            margin: 0;
         }
-        
-        .container {
-            max-width: 700px;
-            margin: 0 auto;
+        .log {
+            background: #0f0f1a;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 12px;
+            max-height: 60vh;
+            overflow-y: auto;
+            font-family: monospace;
         }
-        
-        .card {
-            background: #FFFFFF;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e0e0e0;
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid #333;
         }
-        
-        .card-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #C62828;
-            margin-bottom: 16px;
-            border-left: 4px solid #C62828;
-            padding-left: 12px;
-        }
-        
-        .input-group {
-            margin-bottom: 16px;
-        }
-        
-        label {
-            display: block;
-            color: #333;
-            font-size: 0.85rem;
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
-        
+        .log-success { color: #51cf66; }
+        .log-error { color: #ff6b6b; }
+        .log-info { color: #4dabf7; }
+        .log-warning { color: #ffd43b; }
         input {
             width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            border: 1px solid #d0d0d0;
-            background: #FFFFFF;
-            color: #333;
-            font-size: 1rem;
-        }
-        
-        .btn {
-            padding: 14px 20px;
-            border-radius: 40px;
-            font-weight: 700;
-            font-size: 1rem;
-            border: none;
-            cursor: pointer;
-            text-align: center;
-            transition: 0.2s;
-        }
-        
-        .btn:active {
-            transform: scale(0.97);
-        }
-        
-        .btn-red {
-            background: #C62828;
-            color: white;
-        }
-        
-        .btn-outline-red {
-            background: transparent;
-            border: 2px solid #C62828;
-            color: #C62828;
-        }
-        
-        .btn-dark {
-            background: #2c3e50;
-            color: white;
-        }
-        
-        .btn-green {
-            background: #27ae60;
-            color: white;
-        }
-        
-        .flex {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        
-        .flex-between {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .scan-list {
-            max-height: 280px;
-            overflow-y: auto;
-            margin-top: 12px;
-        }
-        
-        .scan-item {
-            background: #FFFFFF;
-            margin: 8px 0;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-family: monospace;
-            font-size: 0.9rem;
-            border-left: 4px solid #C62828;
-            color: #333;
-            word-break: break-all;
-        }
-        
-        .scan-number {
-            background: #C62828;
-            border-radius: 20px;
-            padding: 2px 10px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            margin-right: 10px;
-            display: inline-block;
-            color: white;
-        }
-        
-        .counter {
-            font-size: 3rem;
-            font-weight: 700;
-            color: #C62828;
-            text-align: center;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .logo {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #C62828;
-            letter-spacing: 1px;
-        }
-        
-        .logo-sub {
-            font-size: 0.7rem;
-            color: #757575;
-        }
-        
-        .toast-container {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
-            pointer-events: none;
-        }
-        
-        .toast {
-            background: #1e293b;
-            color: white;
-            padding: 16px 24px;
-            border-radius: 60px;
-            font-size: 1rem;
-            font-weight: 600;
-            text-align: center;
-            animation: fadeInOut 2s ease forwards;
-            max-width: 90vw;
-            word-break: break-word;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-        
-        .toast.success { background: #27ae60; }
-        .toast.error { background: #C62828; }
-        .toast.info { background: #2c3e50; }
-        
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: scale(0.9); }
-            15% { opacity: 1; transform: scale(1); }
-            85% { opacity: 1; transform: scale(1); }
-            100% { opacity: 0; transform: scale(0.9); }
-        }
-        
-        .mode-badge {
-            background: #C62828;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 40px;
-            font-size: 0.8rem;
-            display: inline-block;
-        }
-        
-        .tsd-hint {
-            background: #f0f0f0;
             padding: 16px;
+            font-size: 18px;
             border-radius: 12px;
-            text-align: center;
-            font-size: 1.2rem;
+            border: none;
+            margin: 10px 0;
         }
-        
-        .action-status {
-            margin-top: 12px;
+        .status {
+            background: #2d2d44;
             padding: 12px;
             border-radius: 12px;
-            text-align: center;
+            margin: 10px 0;
             font-weight: bold;
-            background: #e0e0e0;
-            color: #333;
+            font-size: 18px;
+            text-align: center;
         }
-        
-        .action-status.add {
+        button {
+            background: #4dabf7;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .active {
             background: #27ae60;
             color: white;
-        }
-        
-        .action-status.remove {
-            background: #C62828;
-            color: white;
-        }
-        
-        .last-scan {
-            font-size: 0.85rem;
-            color: #C62828;
-            margin-top: 12px;
-            font-family: monospace;
-            word-break: break-all;
-        }
-        
-        .focus-hint {
-            background: #e3f2fd;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            margin-top: 10px;
-        }
-        
-        .hidden {
-            display: none;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <div class="logo">ONEGA</div>
-        <div class="logo-sub">Логистика · ТСД Сканер</div>
-    </div>
-
-    <!-- СТАРТОВЫЙ ЭКРАН -->
-    <div id="startScreen" class="card">
-        <div class="card-title">📋 Новое задание</div>
-        <div class="input-group">
-            <label>🔢 Номер задания / заказа</label>
-            <input type="text" id="taskNumberInput" placeholder="например: ON-001" autocomplete="off">
-        </div>
-        <button id="startTsdBtn" class="btn btn-dark" style="width: 100%;">🎯 СТАРТ ТСД / ПК<br><span style="font-size: 0.7rem;">(лазерный сканер)</span></button>
-    </div>
-
-    <!-- ОСНОВНОЙ ЭКРАН -->
-    <div id="mainScreen" style="display: none;">
-        <div class="card">
-            <div class="flex-between">
-                <div>
-                    <div style="font-size: 0.75rem; color:#757575;">Текущее задание</div>
-                    <div style="font-size: 1.3rem; font-weight: 700; color:#C62828;" id="currentTaskDisplay">—</div>
-                </div>
-                <button id="closeTaskBtn" class="btn btn-outline-red" style="padding: 8px 16px;">✖️ Закрыть</button>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">📊 Счётчик</div>
-            <div class="counter" id="counterValue">0</div>
-            <div style="text-align: center; font-size: 0.8rem; color:#757575;">отсканировано в задании</div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">🎯 Выберите действие</div>
-            <div class="flex">
-                <button id="setAddActionBtn" class="btn btn-green" style="flex:1;">➕ ДОБАВИТЬ</button>
-                <button id="setRemoveActionBtn" class="btn btn-outline-red" style="flex:1;">➖ ИСКЛЮЧИТЬ</button>
-            </div>
-            <div id="actionStatus" class="action-status">
-                ⚡ Не выбрано
-            </div>
-        </div>
-
-        <!-- Блок для ТСД -->
-        <div class="card">
-            <div class="card-title">🎯 Сканирование ТСД</div>
-            <div class="tsd-hint">
-                🖨️ СКАНЕР ГОТОВ<br>
-                <small>Наведите лазерный сканер на штрих-код</small>
-                <div class="focus-hint">
-                    💡 <strong>Важно:</strong> Поле ввода активно<br>
-                    При сканировании будет звуковой сигнал
-                </div>
-                <div id="lastTsdScan" class="last-scan"></div>
-            </div>
-        </div>
-
-        <!-- Список -->
-        <div class="card">
-            <div class="flex-between">
-                <div class="card-title" style="margin-bottom: 0;">📦 Список значений</div>
-                <button id="clearAllBtn" class="btn btn-outline-red" style="padding: 6px 12px;">🗑️ Очистить всё</button>
-            </div>
-            <div id="scanListContainer" class="scan-list">
-                <div style="text-align:center; padding: 30px; color:#757575;">— пока нет значений —</div>
-            </div>
-        </div>
-
-        <div class="card">
-            <button id="finishTaskBtn" class="btn btn-red" style="width: 100%;">✅ ЗАВЕРШИТЬ ЗАДАНИЕ</button>
-        </div>
-    </div>
-</div>
-
-<div id="toastContainer" class="toast-container"></div>
-
-<!-- Скрытое поле для ТСД -->
-<input type="text" id="tsdHiddenInput" style="position: fixed; top: -100px; left: 0; opacity: 0;" autofocus>
-
-<script>
-    // TOAST
-    function showToast(message, type = 'info') {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.textContent = message;
-        container.appendChild(toast);
-        setTimeout(() => toast.remove(), 2000);
-        if (navigator.vibrate) navigator.vibrate(50);
-    }
-
-    // Глобальные переменные
-    let currentTask = null;
-    let scannedItems = [];
-    let currentAction = null;
+    <h1>🔬 Диагностика ТСД сканера</h1>
     
-    // DOM
-    const startScreen = document.getElementById('startScreen');
-    const mainScreen = document.getElementById('mainScreen');
-    const taskNumberInput = document.getElementById('taskNumberInput');
-    const startTsdBtn = document.getElementById('startTsdBtn');
-    const closeTaskBtn = document.getElementById('closeTaskBtn');
-    const finishTaskBtn = document.getElementById('finishTaskBtn');
-    const currentTaskDisplay = document.getElementById('currentTaskDisplay');
-    const counterValue = document.getElementById('counterValue');
-    const setAddActionBtn = document.getElementById('setAddActionBtn');
-    const setRemoveActionBtn = document.getElementById('setRemoveActionBtn');
-    const actionStatus = document.getElementById('actionStatus');
-    const tsdHiddenInput = document.getElementById('tsdHiddenInput');
-    const lastTsdScan = document.getElementById('lastTsdScan');
-    const scanListContainer = document.getElementById('scanListContainer');
-    const clearAllBtn = document.getElementById('clearAllBtn');
+    <div class="status" id="status">⚡ Ожидание сканирования</div>
     
-    // Обновление списка
-    function updateList() {
-        counterValue.textContent = scannedItems.length;
-        if (scannedItems.length === 0) {
-            scanListContainer.innerHTML = '<div style="text-align:center; padding: 30px; color:#757575;">— пока нет значений —</div>';
-            return;
+    <div>
+        <button id="focusBtn">🎯 Принудительный фокус на поле</button>
+        <button id="clearBtn">🗑️ Очистить лог</button>
+    </div>
+    
+    <div style="margin: 16px 0;">
+        <label>📝 Активное поле ввода (сюда будет вводиться штрих-код):</label>
+        <input type="text" id="scanInput" placeholder="Нажмите кнопку сканирования на ТСД..." autofocus>
+    </div>
+    
+    <div class="log" id="log">
+        <div class="log-entry">📋 Журнал событий...</div>
+    </div>
+    
+    <div style="margin-top: 16px; padding: 12px; background: #2d2d44; border-radius: 12px;">
+        <strong>💡 Инструкция:</strong><br>
+        1. Нажмите на поле ввода выше (оно должно быть активно)<br>
+        2. Нажмите физическую кнопку сканирования на ТСД<br>
+        3. Смотрите, что появляется в логе<br><br>
+        <strong>Ожидаемое поведение:</strong><br>
+        - Должен появиться лог "keydown" с кодом клавиши<br>
+        - В поле ввода должен появиться штрих-код<br>
+        - После штрих-кода обычно приходит Enter
+    </div>
+
+    <script>
+        const scanInput = document.getElementById('scanInput');
+        const logDiv = document.getElementById('log');
+        const statusDiv = document.getElementById('status');
+        const focusBtn = document.getElementById('focusBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        
+        let lastKeyTime = 0;
+        
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            entry.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            console.log(message);
         }
-        let html = '';
-        scannedItems.forEach((value, index) => {
-            html += `<div class="scan-item"><span class="scan-number">${index + 1}</span> ${escapeHtml(value)}</div>`;
+        
+        function setStatus(text, isError = false) {
+            statusDiv.textContent = text;
+            statusDiv.style.background = isError ? '#5c3b3b' : '#2d2d44';
+        }
+        
+        // Логируем все нажатия клавиш
+        scanInput.addEventListener('keydown', (e) => {
+            const now = Date.now();
+            const timeDiff = now - lastKeyTime;
+            lastKeyTime = now;
+            
+            let message = `⌨️ keydown: key="${e.key}", code="${e.code}", keyCode=${e.keyCode}`;
+            
+            // Специальная обработка для кнопки сканирования
+            if (e.key === 'F12' || e.code === 'F12') {
+                message += ` 🔴 ЭТО МОЖЕТ БЫТЬ КНОПКА СКАНЕРА! (F12)`;
+                setStatus('🔴 Нажата F12 - возможно кнопка сканера', false);
+            } else if (e.key === 'F11' || e.code === 'F11') {
+                message += ` 🔴 ЭТО МОЖЕТ БЫТЬ КНОПКА СКАНЕРА! (F11)`;
+                setStatus('🔴 Нажата F11 - возможно кнопка сканера', false);
+            } else if (e.key === 'F10' || e.code === 'F10') {
+                message += ` 🔴 ЭТО МОЖЕТ БЫТЬ КНОПКА СКАНЕРА! (F10)`;
+                setStatus('🔴 Нажата F10 - возможно кнопка сканера', false);
+            } else if (e.key === 'F9' || e.code === 'F9') {
+                message += ` 🔴 ЭТО МОЖЕТ БЫТЬ КНОПКА СКАНЕРА! (F9)`;
+                setStatus('🔴 Нажата F9 - возможно кнопка сканера', false);
+            } else if (e.key === 'F8' || e.code === 'F8') {
+                message += ` 🔴 ЭТО МОЖЕТ БЫТЬ КНОПКА СКАНЕРА! (F8)`;
+                setStatus('🔴 Нажата F8 - возможно кнопка сканера', false);
+            } else if (e.key === 'F7' || e.code === 'F7') {
+                message += ` 🔴 ЭТО МОЖЕТ БЫТЬ КНОПКА СКАНЕРА! (F7)`;
+                setStatus('🔴 Нажата F7 - возможно кнопка сканера', false);
+            } else if (e.key === 'F6' || e.code === 'F6') {
+                message += ` 🔴 ЭТО МОЖЕТ БЫТЬ КНОПКА СКАНЕРА! (F6)`;
+                setStatus('🔴 Нажата F6 - возможно кнопка сканера', false);
+            } else if (e.key === 'F5' || e.code === 'F5') {
+                message += ` 🔴 ЭТО МОЖЕТ БЫТЬ КНОПКА СКАНЕРА! (F5)`;
+                setStatus('🔴 Нажата F5 - возможно кнопка сканера', false);
+            } else if (e.key === 'F4' || e.code === 'F4') {
+                message += ` 🔴 ЭТО МОЖЕТ БЫТЬ КНОПКА СКАНЕРА! (F4)`;
+                setStatus('🔴 Нажата F4 - возможно кнопка сканера', false);
+            } else if (e.key === 'F3' || e.code === 'F3') {
+                message += ` 🔴 ЭТО МОЖЕТ БЫТЬ КНОПКА СКАНЕРА! (F3)`;
+                setStatus('🔴 Нажата F3 - возможно кнопка сканера', false);
+            } else if (e.key === 'F2' || e.code === 'F2') {
+                message += ` 🔴 ЭТО МОЖЕТ БЫТЬ КНОПКА СКАНЕРА! (F2)`;
+                setStatus('🔴 Нажата F2 - возможно кнопка сканера', false);
+            } else if (e.key === 'F1' || e.code === 'F1') {
+                message += ` 🔴 ЭТО МОЖЕТ БЫТЬ КНОПКА СКАНЕРА! (F1)`;
+                setStatus('🔴 Нажата F1 - возможно кнопка сканера', false);
+            } else if (e.key === 'Enter' || e.code === 'Enter') {
+                message += ` ⏎ Enter (обычно завершает ввод сканера)`;
+                setStatus('⏎ Получен Enter - сканирование завершено!', false);
+            } else if (e.key.length === 1) {
+                message += ` 📷 Символ - возможно часть сканирования`;
+            }
+            
+            addLog(message, 'info');
         });
-        scanListContainer.innerHTML = html;
-    }
-    
-    function escapeHtml(str) {
-        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
-    }
-    
-    function escapeXml(str) {
-        return str.replace(/[<>&]/g, m => m === '<' ? '&lt;' : m === '>' ? '&gt;' : '&amp;');
-    }
-    
-    // Действия
-    function addItem(value) {
-        if (!value || value.trim() === '') return false;
-        value = value.trim();
-        if (scannedItems.includes(value)) {
-            showToast(`⚠️ "${value}" уже есть в списке`, 'error');
-            return false;
-        }
-        scannedItems.push(value);
-        updateList();
-        showToast(`✅ Добавлено: ${value}`, 'success');
-        return true;
-    }
-    
-    function removeItem(value) {
-        if (!value || value.trim() === '') return false;
-        value = value.trim();
-        const index = scannedItems.indexOf(value);
-        if (index === -1) {
-            showToast(`❌ "${value}" не найдено в списке`, 'error');
-            return false;
-        }
-        scannedItems.splice(index, 1);
-        updateList();
-        showToast(`🗑️ Исключено: ${value}`, 'info');
-        return true;
-    }
-    
-    function executeAction(value) {
-        if (!currentAction) {
-            showToast('⚠️ Сначала выберите действие: ДОБАВИТЬ или ИСКЛЮЧИТЬ', 'error');
-            return false;
-        }
-        if (currentAction === 'add') return addItem(value);
-        if (currentAction === 'remove') return removeItem(value);
-        return false;
-    }
-    
-    // Выбор действия
-    function setAction(action) {
-        currentAction = action;
-        if (action === 'add') {
-            actionStatus.textContent = '➕ РЕЖИМ: ДОБАВЛЕНИЕ';
-            actionStatus.className = 'action-status add';
-            showToast('Режим ДОБАВЛЕНИЯ активирован', 'info');
-        } else {
-            actionStatus.textContent = '➖ РЕЖИМ: ИСКЛЮЧЕНИЕ';
-            actionStatus.className = 'action-status remove';
-            showToast('Режим ИСКЛЮЧЕНИЯ активирован', 'info');
-        }
+        
+        // Логируем ввод текста
+        scanInput.addEventListener('input', (e) => {
+            const value = scanInput.value;
+            if (value.length > 0) {
+                addLog(`📝 Текст в поле: "${value}"`, 'success');
+                setStatus(`✅ Получен текст: ${value.substring(0, 30)}${value.length > 30 ? '...' : ''}`);
+            }
+        });
+        
+        // Логируем потерю фокуса
+        scanInput.addEventListener('blur', () => {
+            addLog(`⚠️ Поле ввода потеряло фокус!`, 'warning');
+            setStatus('⚠️ Поле не в фокусе - сканер может не работать');
+        });
+        
+        scanInput.addEventListener('focus', () => {
+            addLog(`✅ Поле ввода в фокусе`, 'success');
+            setStatus('✅ Поле в фокусе. Нажмите кнопку сканирования.');
+        });
+        
+        // Принудительный фокус
+        focusBtn.addEventListener('click', () => {
+            scanInput.focus();
+            addLog(`🎯 Принудительный фокус на поле ввода`, 'success');
+            setStatus('Фокус установлен. Нажмите кнопку сканирования.');
+        });
+        
+        clearBtn.addEventListener('click', () => {
+            logDiv.innerHTML = '<div class="log-entry">📋 Журнал очищен...</div>';
+            scanInput.value = '';
+            addLog('Журнал очищен', 'info');
+        });
+        
+        addLog('🚀 Диагностика запущена', 'success');
+        addLog('📌 Нажмите на поле ввода, затем нажмите кнопку сканирования на ТСД', 'info');
+        addLog('💡 Если сканер не работает - проверьте настройки клавиатуры в системе ТСД', 'warning');
+        
+        // Фокус при загрузке
         setTimeout(() => {
-            tsdHiddenInput.focus();
-        }, 100);
-    }
-    
-    // ТСД режим
-    let tsdFocusInterval = null;
-    
-    function setupTsdMode() {
-        if (tsdFocusInterval) {
-            clearInterval(tsdFocusInterval);
-            tsdFocusInterval = null;
-        }
-        
-        tsdHiddenInput.value = '';
-        tsdHiddenInput.focus();
-        
-        // Интервал для удержания фокуса
-        tsdFocusInterval = setInterval(() => {
-            if (document.activeElement !== tsdHiddenInput) {
-                tsdHiddenInput.focus();
-            }
-        }, 300);
-        
-        // Обработчик сканирования
-        const onScan = (e) => {
-            if (e.key === 'Enter') {
-                const value = tsdHiddenInput.value.trim();
-                if (value) {
-                    if (lastTsdScan) {
-                        lastTsdScan.textContent = `✓ Последний скан: ${value}`;
-                    }
-                    executeAction(value);
-                    tsdHiddenInput.value = '';
-                }
-                e.preventDefault();
-            }
-        };
-        
-        tsdHiddenInput.removeEventListener('keypress', onScan);
-        tsdHiddenInput.addEventListener('keypress', onScan);
-        
-        // Возврат фокуса при потере
-        tsdHiddenInput.addEventListener('blur', () => {
-            setTimeout(() => tsdHiddenInput.focus(), 100);
-        });
-    }
-    
-    function stopTsdMode() {
-        if (tsdFocusInterval) {
-            clearInterval(tsdFocusInterval);
-            tsdFocusInterval = null;
-        }
-    }
-    
-    // Старт задания
-    function startTask() {
-        const taskNum = taskNumberInput.value.trim();
-        if (!taskNum) {
-            showToast('❌ Введите номер задания', 'error');
-            return;
-        }
-        
-        currentTask = taskNum;
-        scannedItems = [];
-        currentAction = null;
-        
-        actionStatus.textContent = '⚡ Не выбрано';
-        actionStatus.className = 'action-status';
-        
-        currentTaskDisplay.textContent = currentTask;
-        updateList();
-        
-        setupTsdMode();
-        
-        startScreen.style.display = 'none';
-        mainScreen.style.display = 'block';
-        showToast(`✅ Задание "${currentTask}" начато`, 'success');
-        showToast('🎯 ТСД режим активен. Сканируйте штрих-коды.', 'info');
-    }
-    
-    // Завершение задания
-    function generateXML() {
-        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-        xml += '<task>\n';
-        xml += `  <taskNumber>${escapeXml(currentTask)}</taskNumber>\n`;
-        xml += `  <timestamp>${new Date().toISOString()}</timestamp>\n`;
-        xml += `  <totalCount>${scannedItems.length}</totalCount>\n`;
-        xml += '  <items>\n';
-        scannedItems.forEach(value => {
-            xml += `    <item>${escapeXml(value)}</item>\n`;
-        });
-        xml += '  </items>\n';
-        xml += '</task>';
-        return xml;
-    }
-    
-    function downloadFile(content, filename) {
-        const blob = new Blob([content], {type: 'application/xml;charset=utf-8'});
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    }
-    
-    async function finishTask() {
-        if (!currentTask) return;
-        if (scannedItems.length === 0) {
-            showToast('⚠️ Нет данных для экспорта', 'error');
-            return;
-        }
-        
-        const xmlContent = generateXML();
-        const filename = `ONEGA_${currentTask.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.xml`;
-        
-        console.log('=== XML экспорт ===');
-        console.log(xmlContent);
-        
-        if (navigator.share) {
-            try {
-                const file = new File([xmlContent], filename, {type: 'application/xml'});
-                await navigator.share({
-                    title: 'ONEGA Задание',
-                    text: `${currentTask} (${scannedItems.length} позиций)`,
-                    files: [file]
-                });
-                showToast('📤 Файл отправлен', 'success');
-            } catch (e) {
-                if (e.name !== 'AbortError') {
-                    downloadFile(xmlContent, filename);
-                    showToast('💾 Файл сохранён', 'success');
-                }
-            }
-        } else {
-            downloadFile(xmlContent, filename);
-            showToast('💾 Файл сохранён', 'success');
-        }
-        
-        stopTsdMode();
-        currentTask = null;
-        scannedItems = [];
-        currentAction = null;
-        startScreen.style.display = 'block';
-        mainScreen.style.display = 'none';
-        taskNumberInput.value = '';
-        updateList();
-    }
-    
-    function closeTask() {
-        if (confirm('Закрыть задание? Все несохранённые данные будут потеряны.')) {
-            stopTsdMode();
-            currentTask = null;
-            scannedItems = [];
-            currentAction = null;
-            startScreen.style.display = 'block';
-            mainScreen.style.display = 'none';
-            taskNumberInput.value = '';
-            showToast('🏠 Задание закрыто', 'info');
-        }
-    }
-    
-    // Обработчики
-    startTsdBtn.addEventListener('click', startTask);
-    closeTaskBtn.addEventListener('click', closeTask);
-    finishTaskBtn.addEventListener('click', finishTask);
-    setAddActionBtn.addEventListener('click', () => setAction('add'));
-    setRemoveActionBtn.addEventListener('click', () => setAction('remove'));
-    
-    clearAllBtn.addEventListener('click', () => {
-        if (confirm(`Очистить все ${scannedItems.length} значений?`)) {
-            scannedItems = [];
-            updateList();
-            showToast('🗑️ Список очищен', 'info');
-        }
-    });
-    
-    updateList();
-    
-    // Фокус на поле ввода номера задания при загрузке
-    setTimeout(() => {
-        taskNumberInput.focus();
-    }, 100);
-</script>
+            scanInput.focus();
+        }, 500);
+    </script>
 </body>
 </html>

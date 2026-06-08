@@ -258,7 +258,6 @@
 
     <!-- ОСНОВНОЙ ЭКРАН -->
     <div id="mainScreen" style="display: none;">
-        <!-- Шапка задания -->
         <div class="card">
             <div class="flex-between">
                 <div>
@@ -269,14 +268,12 @@
             </div>
         </div>
 
-        <!-- Счётчик -->
         <div class="card">
             <div class="card-title">📊 Счётчик</div>
             <div class="counter" id="counterValue">0</div>
             <div style="text-align: center; font-size: 0.8rem; color:#757575;">отсканировано в задании</div>
         </div>
 
-        <!-- Выбор действия -->
         <div class="card">
             <div class="card-title">🎯 Выберите действие</div>
             <div class="flex">
@@ -288,7 +285,6 @@
             </div>
         </div>
 
-        <!-- Поле для сканирования -->
         <div class="card">
             <div class="card-title">🎯 Сканирование ТСД</div>
             <div style="background: #f0f0f0; padding: 16px; border-radius: 12px; text-align: center;">
@@ -297,21 +293,20 @@
             
             <div style="margin-top: 16px;">
                 <label>📷 Штрих-код:</label>
-                <input type="text" id="scanInput" class="scan-input" placeholder="нажмите на поле, затем сканируйте...">
+                <input type="text" id="scanInput" class="scan-input" placeholder="наведите лазер на штрих-код..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             </div>
             
             <div class="scan-hint">
                 💡 <strong>Инструкция:</strong><br>
-                1. Кликните на поле выше<br>
+                1. Кликните на поле выше (оно должно быть активно)<br>
                 2. Нажмите физическую кнопку сканирования на ТСД<br>
-                3. Штрих-код появится → нажмите Enter<br>
-                <span style="font-size: 0.7rem;">(Если настроен автоматический Enter — нажимать не нужно)</span>
+                3. Штрих-код обработается автоматически! 🔥<br>
+                <span style="font-size: 0.7rem;">(Enter нажимать не нужно — приложение само определит конец сканирования)</span>
             </div>
             
             <div id="lastTsdScan" class="last-scan"></div>
         </div>
 
-        <!-- Список отсканированных значений -->
         <div class="card">
             <div class="flex-between">
                 <div class="card-title" style="margin-bottom: 0;">📦 Список значений</div>
@@ -322,7 +317,6 @@
             </div>
         </div>
 
-        <!-- Завершение задания -->
         <div class="card">
             <button id="finishTaskBtn" class="btn btn-red" style="width: 100%;">✅ ЗАВЕРШИТЬ ЗАДАНИЕ</button>
         </div>
@@ -332,7 +326,7 @@
 <div id="toastContainer" class="toast-container"></div>
 
 <script>
-    // ========== TOAST-УВЕДОМЛЕНИЯ ==========
+    // ========== TOAST ==========
     function showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
@@ -343,12 +337,16 @@
         if (navigator.vibrate) navigator.vibrate(50);
     }
 
-    // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+    // ========== ГЛОБАЛЬНЫЕ ==========
     let currentTask = null;
     let scannedItems = [];
     let currentAction = null;
     
-    // ========== DOM ЭЛЕМЕНТЫ ==========
+    // Для автоматического распознавания сканера
+    let scanTimeout = null;
+    let lastValue = '';
+    
+    // DOM
     const startScreen = document.getElementById('startScreen');
     const mainScreen = document.getElementById('mainScreen');
     const taskNumberInput = document.getElementById('taskNumberInput');
@@ -365,7 +363,7 @@
     const scanListContainer = document.getElementById('scanListContainer');
     const clearAllBtn = document.getElementById('clearAllBtn');
     
-    // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
+    // ========== ОБНОВЛЕНИЕ ==========
     function updateList() {
         counterValue.textContent = scannedItems.length;
         if (scannedItems.length === 0) {
@@ -387,7 +385,7 @@
         return str.replace(/[<>&]/g, m => m === '<' ? '&lt;' : m === '>' ? '&gt;' : '&amp;');
     }
     
-    // ========== ДЕЙСТВИЯ С ДАННЫМИ ==========
+    // ========== ДЕЙСТВИЯ ==========
     function addItem(value) {
         if (!value || value.trim() === '') return false;
         value = value.trim();
@@ -425,21 +423,74 @@
         return false;
     }
     
+    // ========== ОБРАБОТКА СКАНА (АВТОМАТИЧЕСКАЯ) ==========
     function processScan(value) {
         if (!value || value.trim() === '') return;
         value = value.trim();
         
+        // Показываем последний скан
         if (lastTsdScan) {
             lastTsdScan.textContent = `✓ Последний скан: ${value}`;
         }
         
+        // Выполняем действие
         executeAction(value);
-        scanInput.value = '';
         
-        // Возвращаем фокус для следующего сканирования
+        // Очищаем поле
+        scanInput.value = '';
+        lastValue = '';
+        
+        // Возвращаем фокус для следующего скана
         setTimeout(() => {
             scanInput.focus();
-        }, 100);
+        }, 50);
+    }
+    
+    // ========== АВТОМАТИЧЕСКОЕ ОПРЕДЕЛЕНИЕ СКАНА (БЕЗ ENTER) ==========
+    function setupAutoScanDetection() {
+        if (!scanInput) return;
+        
+        // Отключаем автодополнение
+        scanInput.setAttribute('autocomplete', 'off');
+        scanInput.setAttribute('autocorrect', 'off');
+        scanInput.setAttribute('autocapitalize', 'off');
+        scanInput.setAttribute('spellcheck', 'false');
+        
+        // Основной обработчик изменений в поле
+        scanInput.addEventListener('input', function(e) {
+            const currentValue = scanInput.value;
+            
+            // Если появился новый текст (сканирование началось)
+            if (currentValue && currentValue.length > 0) {
+                // Сбрасываем предыдущий таймер
+                if (scanTimeout) clearTimeout(scanTimeout);
+                
+                // Устанавливаем новый таймер
+                scanTimeout = setTimeout(() => {
+                    // Если значение не изменилось за время паузы — сканирование завершено
+                    if (scanInput.value === currentValue && currentValue.trim() !== '') {
+                        processScan(currentValue);
+                    }
+                }, 80); // 80 мс паузы после последнего символа
+            }
+        });
+        
+        // Обработчик для ручного Enter (на случай если всё же нажмут)
+        scanInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                if (scanTimeout) clearTimeout(scanTimeout);
+                if (scanInput.value.trim() !== '') {
+                    processScan(scanInput.value);
+                }
+                e.preventDefault();
+            }
+        });
+        
+        // Фокус при клике
+        scanInput.addEventListener('focus', function() {
+            scanInput.value = '';
+            lastValue = '';
+        });
     }
     
     // ========== ВЫБОР ДЕЙСТВИЯ ==========
@@ -459,7 +510,7 @@
         }, 100);
     }
     
-    // ========== СТАРТ ЗАДАНИЯ ==========
+    // ========== СТАРТ ==========
     function startTask() {
         const taskNum = taskNumberInput.value.trim();
         if (!taskNum) {
@@ -488,7 +539,7 @@
         }, 500);
     }
     
-    // ========== ЗАВЕРШЕНИЕ ЗАДАНИЯ (XML + экспорт) ==========
+    // ========== XML ==========
     function generateXML() {
         let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
         xml += '<task>\n';
@@ -529,7 +580,6 @@
         console.log('=== XML экспорт ===');
         console.log(xmlContent);
         
-        // Если есть Web Share API (телефоны) — предлагаем поделиться
         if (navigator.share) {
             try {
                 const file = new File([xmlContent], filename, {type: 'application/xml'});
@@ -550,7 +600,6 @@
             showToast('💾 Файл сохранён', 'success');
         }
         
-        // Сброс и возврат на стартовый экран
         currentTask = null;
         scannedItems = [];
         currentAction = null;
@@ -558,7 +607,6 @@
         mainScreen.style.display = 'none';
         taskNumberInput.value = '';
         updateList();
-        showToast('🏁 Задание завершено', 'success');
     }
     
     function closeTask() {
@@ -573,25 +621,12 @@
         }
     }
     
-    // ========== НАВЕШИВАНИЕ ОБРАБОТЧИКОВ ==========
+    // ========== НАВЕШИВАНИЕ ==========
     startTsdBtn.addEventListener('click', startTask);
     closeTaskBtn.addEventListener('click', closeTask);
     finishTaskBtn.addEventListener('click', finishTask);
     setAddActionBtn.addEventListener('click', () => setAction('add'));
     setRemoveActionBtn.addEventListener('click', () => setAction('remove'));
-    
-    // Обработка сканирования (Enter)
-    scanInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            processScan(scanInput.value);
-            e.preventDefault();
-        }
-    });
-    
-    // Клик на поле ввода для фокуса
-    scanInput.addEventListener('focus', () => {
-        scanInput.value = '';
-    });
     
     clearAllBtn.addEventListener('click', () => {
         if (confirm(`Очистить все ${scannedItems.length} значений?`)) {
@@ -601,7 +636,9 @@
         }
     });
     
-    // Начальное состояние
+    // Активируем автоопределение сканера
+    setupAutoScanDetection();
+    
     updateList();
     
     setTimeout(() => {

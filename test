@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ДИАГНОСТИКА QR-сканера</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 16px;
+            margin: 0;
+        }
+        .log {
+            background: #0f0f1a;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 12px;
+            max-height: 70vh;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid #333;
+        }
+        .log-error { color: #ff6b6b; }
+        .log-success { color: #51cf66; }
+        .log-info { color: #4dabf7; }
+        .log-warning { color: #ffd43b; }
+        button {
+            background: #4dabf7;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .status {
+            background: #2d2d44;
+            padding: 12px;
+            border-radius: 12px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        video {
+            width: 100%;
+            border-radius: 16px;
+            background: #000;
+            margin-top: 10px;
+        }
+        .frame {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔬 ДИАГНОСТИКА QR-СКАНЕРА</h1>
+    
+    <button id="startBtn">🎥 ЗАПУСТИТЬ КАМЕРУ</button>
+    <button id="stopBtn" style="background:#ff6b6b;">⏹️ ОСТАНОВИТЬ</button>
+    
+    <div class="status" id="status">⚡ Готов к запуску</div>
+    
+    <div id="videoContainer" style="display: none;">
+        <div class="frame">
+            <video id="video" autoplay playsinline muted></video>
+            <canvas id="debugCanvas" style="display: none;"></canvas>
+        </div>
+    </div>
+    
+    <div class="log" id="log">
+        <div class="log-entry">📋 Журнал диагностики...</div>
+    </div>
+
+    <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+    
+    <script>
+        // Элементы
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const statusDiv = document.getElementById('status');
+        const logDiv = document.getElementById('log');
+        const videoContainer = document.getElementById('videoContainer');
+        const video = document.getElementById('video');
+        const debugCanvas = document.getElementById('debugCanvas');
+        
+        let currentStream = null;
+        let scanInterval = null;
+        let reader = null;
+        let isScanning = false;
+        
+        // Логгирование
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            entry.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            console.log(message);
+        }
+        
+        function setStatus(text, isError = false) {
+            statusDiv.textContent = text;
+            statusDiv.style.background = isError ? '#5c3b3b' : '#2d2d44';
+            addLog(`Статус: ${text}`, isError ? 'error' : 'info');
+        }
+        
+        // Инициализация ZXing только для QR
+        async function initReader() {
+            addLog('🔧 Инициализация ZXing...', 'info');
+            if (!window.ZXing) {
+                addLog('❌ ZXing не загружен!', 'error');
+                return false;
+            }
+            
+            const hints = new Map();
+            hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
+            hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+            
+            reader = new ZXing.MultiFormatReader();
+            reader.setHints(hints);
+            addLog('✅ ZXing инициализирован (только QR)', 'success');
+            return true;
+        }
+        
+        // Захват и анализ кадра
+        async function captureAndDecode() {
+            if (!isScanning) return;
+            if (!video.videoWidth || !video.videoHeight) {
+                addLog('⚠️ Видео ещё не готово', 'warning');
+                return;
+            }
+            
+            // Создаём canvas для захвата
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            addLog(`📸 Захвачен кадр: ${canvas.width}x${canvas.height}`, 'info');
+            
+            try {
+                const result = await reader.decodeFromImageElement(canvas);
+                if (result && result.getText()) {
+                    const qrText = result.getText();
+                    addLog(`🎉 УСПЕХ! QR распознан: "${qrText}"`, 'success');
+                    setStatus(`✅ Распознано: ${qrText.substring(0, 50)}`);
+                    
+                    // Останавливаем сканирование
+                    stopScanning();
+                    return;
+                }
+            } catch (e) {
+                // QR не найден — это нормально
+                addLog(`❌ QR не найден на кадре: ${e.message || 'нет данных'}`, 'warning');
+            }
+        }
+        
+        // Запуск сканирования
+        async function startScanning() {
+            if (isScanning) {
+                addLog('⚠️ Сканирование уже идёт', 'warning');
+                return;
+            }
+            
+            await initReader();
+            
+            // Запрашиваем камеру
+            addLog('📷 Запрос доступа к камере...', 'info');
+            
+            const constraints = {
+                video: {
+                    facingMode: 'environment',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            };
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                currentStream = stream;
+                video.srcObject = stream;
+                videoContainer.style.display = 'block';
+                
+                await video.play();
+                addLog(`✅ Камера запущена, разрешение: ${video.videoWidth}x${video.videoHeight}`, 'success');
+                setStatus('🔍 Камера работает, сканируем...');
+                
+                isScanning = true;
+                
+                // Запускаем периодический захват кадров (каждые 300 мс)
+                scanInterval = setInterval(() => {
+                    captureAndDecode();
+                }, 300);
+                
+                addLog('🔄 Запущен цикл сканирования (каждые 300 мс)', 'success');
+                
+            } catch (err) {
+                addLog(`❌ Ошибка камеры: ${err.message}`, 'error');
+                setStatus(`Ошибка: ${err.message}`, true);
+                
+                // Проверяем, есть ли камера вообще
+                if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+                    addLog('⚠️ API медиаустройств не поддерживается', 'error');
+                } else {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const videoDevices = devices.filter(d => d.kind === 'videoinput');
+                    addLog(`📹 Найдено видеоустройств: ${videoDevices.length}`, 'info');
+                    videoDevices.forEach(d => addLog(`   - ${d.label || 'без названия'}`, 'info'));
+                }
+            }
+        }
+        
+        function stopScanning() {
+            if (scanInterval) {
+                clearInterval(scanInterval);
+                scanInterval = null;
+            }
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            isScanning = false;
+            videoContainer.style.display = 'none';
+            if (video.srcObject) {
+                video.srcObject = null;
+            }
+            addLog('⏹️ Сканирование остановлено', 'info');
+            setStatus('⏸️ Остановлено');
+        }
+        
+        // Кнопки
+        startBtn.addEventListener('click', startScanning);
+        stopBtn.addEventListener('click', stopScanning);
+        
+        addLog('🚀 Диагностическая версия загружена', 'success');
+        addLog('📱 Нажмите "ЗАПУСТИТЬ КАМЕРУ" и наведите на QR-код', 'info');
+    </script>
+</body>
+</html>

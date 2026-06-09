@@ -351,73 +351,78 @@
     }
 
     // ========== ПАРСЕР ШТРИХ-КОДА (по фиксированным позициям) ==========
-    function parsePalletBarcode(barcode) {
-        // Удаляем возможные пробелы
-        const cleanBarcode = barcode.replace(/\s/g, '');
-        
-        // Проверка минимальной длины
-        if (!cleanBarcode || cleanBarcode.length < 20) {
-            return { raw: cleanBarcode, error: 'Неверная длина', parsed: false };
-        }
-        
-        // Попытка парсинга по позициям (исходя из структуры 59 символов)
-        if (cleanBarcode.length >= 59) {
-            return {
-                containerNumber: cleanBarcode.substring(2, 7),
-                nomenclatureId: cleanBarcode.substring(14, 27),
-                productionDate: cleanBarcode.substring(29, 35),
-                batchNumber: cleanBarcode.substring(37, 41),
-                quantityPerPallet: parseInt(cleanBarcode.substring(47, 51)) || 0,
-                quantityPerBox: parseInt(cleanBarcode.substring(57, 59)) || 0,
-                raw: cleanBarcode,
-                parsed: true
-            };
-        }
-        
-        // Если не удалось распарсить по полной структуре - возвращаем сырое значение
-        return {
-            raw: cleanBarcode,
-            parsed: false
+    function // ========== ПАРСЕР ШТРИХ-КОДА (по фиксированным позициям) ==========
+function parsePalletBarcode(barcode) {
+    // Удаляем возможные пробелы
+    const cleanBarcode = barcode.replace(/\s/g, '');
+    
+    // Проверка минимальной длины
+    if (!cleanBarcode || cleanBarcode.length < 20) {
+        return { 
+            sourceValue: cleanBarcode, 
+            parsed: false 
         };
     }
     
-    // ========== ФОРМИРОВАНИЕ JSON ДЛЯ ЭКСПОРТА ==========
-    function generateJSON() {
-        const items = scannedItems.map(item => {
-            // Пробуем распарсить каждый штрих-код
-            const parsed = parsePalletBarcode(item);
-            
-            if (parsed.parsed) {
-                // Распарсенный вариант
-                return {
-                    containerNumber: parsed.containerNumber,
-                    nomenclatureId: parsed.nomenclatureId,
-                    productionDate: parsed.productionDate,
-                    batchNumber: parsed.batchNumber,
-                    quantityPerPallet: parsed.quantityPerPallet,
-                    quantityPerBox: parsed.quantityPerBox,
-                    raw: parsed.raw
-                };
-            } else {
-                // Если не распарсилось - просто сырая строка
-                return {
-                    raw: parsed.raw,
-                    parsed: false
-                };
-            }
-        });
-        
-        const result = {
-            task: {
-                taskNumber: currentTask,
-                timestamp: new Date().toISOString(),
-                totalCount: scannedItems.length,
-                items: items
-            }
+    // Попытка парсинга по позициям (исходя из структуры 59 символов)
+    if (cleanBarcode.length >= 59) {
+        return {
+            sourceValue: cleanBarcode,
+            containerNumber: cleanBarcode.substring(2, 7),
+            nomenclatureId: cleanBarcode.substring(14, 27),
+            productionDate: cleanBarcode.substring(29, 35),
+            batchNumber: cleanBarcode.substring(37, 41),
+            quantityPerPallet: parseInt(cleanBarcode.substring(47, 51)) || 0,
+            quantityPerBox: parseInt(cleanBarcode.substring(57, 59)) || 0,
+            parsed: true
         };
-        
-        return JSON.stringify(result, null, 2);
     }
+    
+    // Если не удалось распарсить по полной структуре - возвращаем сырое значение
+    return {
+        sourceValue: cleanBarcode,
+        parsed: false
+    };
+}
+
+// ========== ФОРМИРОВАНИЕ JSON ДЛЯ ЭКСПОРТА ==========
+function generateJSON() {
+    const items = scannedItems.map(item => {
+        // Пробуем распарсить каждый штрих-код
+        const parsed = parsePalletBarcode(item);
+        
+        if (parsed.parsed) {
+            // Распарсенный вариант
+            return {
+                sourceValue: parsed.sourceValue,
+                containerNumber: parsed.containerNumber,
+                nomenclatureId: parsed.nomenclatureId,
+                productionDate: parsed.productionDate,
+                batchNumber: parsed.batchNumber,
+                quantityPerPallet: parsed.quantityPerPallet,
+                quantityPerBox: parsed.quantityPerBox,
+                parsed: true
+            };
+        } else {
+            // Если не распарсилось - только sourceValue
+            return {
+                sourceValue: parsed.sourceValue,
+                parsed: false
+            };
+        }
+    });
+    
+    const result = {
+        task: {
+            taskNumber: currentTask,
+            timestamp: new Date().toISOString(),
+            totalCount: scannedItems.length,
+            items: items
+        }
+    };
+    
+    return JSON.stringify(result, null, 2);
+}
     
     // ========== СОХРАНЕНИЕ JSON ФАЙЛА ==========
     function saveJSON() {

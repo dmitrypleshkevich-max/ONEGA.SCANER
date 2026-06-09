@@ -252,6 +252,16 @@
             color: #27ae60;
             font-weight: bold;
         }
+        
+        .parsed-failed {
+            background: #fef2f2;
+            border: 1px solid #C62828;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-top: 8px;
+            font-size: 0.7rem;
+            color: #C62828;
+        }
     </style>
 </head>
 <body>
@@ -313,8 +323,7 @@
                 💡 <strong>Инструкция:</strong><br>
                 1. Кликните на поле выше<br>
                 2. Нажмите физическую кнопку сканирования на ТСД<br>
-                3. Штрих-код обработается автоматически!<br>
-                <span style="font-size: 0.7rem;">(Enter нажимать не нужно)</span>
+                3. Штрих-код обработается автоматически!
             </div>
             
             <div id="lastTsdScan" class="last-scan"></div>
@@ -342,6 +351,7 @@
     // ========== TOAST ==========
     function showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
+        if (!container) return;
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.textContent = message;
@@ -350,101 +360,30 @@
         if (navigator.vibrate) navigator.vibrate(50);
     }
 
-    // ========== ПАРСЕР ШТРИХ-КОДА (по фиксированным позициям) ==========
-    function // ========== ПАРСЕР ШТРИХ-КОДА (по фиксированным позициям) ==========
-function parsePalletBarcode(barcode) {
-    // Удаляем возможные пробелы
-    const cleanBarcode = barcode.replace(/\s/g, '');
-    
-    // Проверка минимальной длины
-    if (!cleanBarcode || cleanBarcode.length < 20) {
-        return { 
-            sourceValue: cleanBarcode, 
-            parsed: false 
-        };
-    }
-    
-    // Попытка парсинга по позициям (исходя из структуры 59 символов)
-    if (cleanBarcode.length >= 59) {
-        return {
-            sourceValue: cleanBarcode,
-            containerNumber: cleanBarcode.substring(2, 7),
-            nomenclatureId: cleanBarcode.substring(14, 27),
-            productionDate: cleanBarcode.substring(29, 35),
-            batchNumber: cleanBarcode.substring(37, 41),
-            quantityPerPallet: parseInt(cleanBarcode.substring(47, 51)) || 0,
-            quantityPerBox: parseInt(cleanBarcode.substring(57, 59)) || 0,
-            parsed: true
-        };
-    }
-    
-    // Если не удалось распарсить по полной структуре - возвращаем сырое значение
-    return {
-        sourceValue: cleanBarcode,
-        parsed: false
-    };
-}
-
-// ========== ФОРМИРОВАНИЕ JSON ДЛЯ ЭКСПОРТА ==========
-function generateJSON() {
-    const items = scannedItems.map(item => {
-        // Пробуем распарсить каждый штрих-код
-        const parsed = parsePalletBarcode(item);
+    // ========== ПАРСЕР ШТРИХ-КОДА ==========
+    function parsePalletBarcode(barcode) {
+        const cleanBarcode = String(barcode || '').replace(/\s/g, '');
         
-        if (parsed.parsed) {
-            // Распарсенный вариант
+        if (!cleanBarcode || cleanBarcode.length < 20) {
+            return { sourceValue: cleanBarcode, parsed: false };
+        }
+        
+        if (cleanBarcode.length >= 59) {
             return {
-                sourceValue: parsed.sourceValue,
-                containerNumber: parsed.containerNumber,
-                nomenclatureId: parsed.nomenclatureId,
-                productionDate: parsed.productionDate,
-                batchNumber: parsed.batchNumber,
-                quantityPerPallet: parsed.quantityPerPallet,
-                quantityPerBox: parsed.quantityPerBox,
+                sourceValue: cleanBarcode,
+                containerNumber: cleanBarcode.substring(2, 7),
+                nomenclatureId: cleanBarcode.substring(14, 27),
+                productionDate: cleanBarcode.substring(29, 35),
+                batchNumber: cleanBarcode.substring(37, 41),
+                quantityPerPallet: parseInt(cleanBarcode.substring(47, 51)) || 0,
+                quantityPerBox: parseInt(cleanBarcode.substring(57, 59)) || 0,
                 parsed: true
             };
-        } else {
-            // Если не распарсилось - только sourceValue
-            return {
-                sourceValue: parsed.sourceValue,
-                parsed: false
-            };
         }
-    });
-    
-    const result = {
-        task: {
-            taskNumber: currentTask,
-            timestamp: new Date().toISOString(),
-            totalCount: scannedItems.length,
-            items: items
-        }
-    };
-    
-    return JSON.stringify(result, null, 2);
-}
-    
-    // ========== СОХРАНЕНИЕ JSON ФАЙЛА ==========
-    function saveJSON() {
-        const jsonContent = generateJSON();
-        const filename = `ONEGA_${currentTask.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.json`;
         
-        const blob = new Blob([jsonContent], {type: 'application/json;charset=utf-8'});
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        console.log('=== JSON экспорт ===');
-        console.log(jsonContent);
-        
-        return filename;
+        return { sourceValue: cleanBarcode, parsed: false };
     }
-    
+
     // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
     let currentTask = null;
     let scannedItems = [];
@@ -470,14 +409,16 @@ function generateJSON() {
     
     // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
     function updateList() {
+        if (!counterValue || !scanListContainer) return;
         counterValue.textContent = scannedItems.length;
+        
         if (scannedItems.length === 0) {
             scanListContainer.innerHTML = '<div style="text-align:center; padding: 30px; color:#757575;">— пока нет значений —</div>';
             return;
         }
+        
         let html = '';
         scannedItems.forEach((value, index) => {
-            // Пробуем распарсить для отображения
             const parsed = parsePalletBarcode(value);
             let preview = '';
             if (parsed.parsed) {
@@ -486,6 +427,8 @@ function generateJSON() {
                     📅 Дата: <span>${parsed.productionDate}</span> | 
                     📊 Кол-во: <span>${parsed.quantityPerPallet}</span>
                 </div>`;
+            } else {
+                preview = `<div class="parsed-failed">⚠️ Не удалось распарсить (длина: ${parsed.sourceValue.length} симв.)</div>`;
             }
             html += `<div class="scan-item">
                 <span class="scan-number">${index + 1}</span> 
@@ -497,7 +440,7 @@ function generateJSON() {
     }
     
     function escapeHtml(str) {
-        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+        return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
     }
     
     // ========== ДЕЙСТВИЯ С ДАННЫМИ ==========
@@ -505,18 +448,17 @@ function generateJSON() {
         if (!value || value.trim() === '') return false;
         value = value.trim();
         if (scannedItems.includes(value)) {
-            showToast(`⚠️ "${value}" уже есть в списке`, 'error');
+            showToast(`⚠️ Такой код уже есть в списке`, 'error');
             return false;
         }
         scannedItems.push(value);
         updateList();
         
-        // Показываем распарсенные данные в тосте
         const parsed = parsePalletBarcode(value);
         if (parsed.parsed) {
-            showToast(`✅ Добавлено: Контейнер ${parsed.containerNumber}`, 'success');
+            showToast(`✅ Добавлен контейнер ${parsed.containerNumber}`, 'success');
         } else {
-            showToast(`✅ Добавлено: ${value.substring(0, 30)}${value.length > 30 ? '...' : ''}`, 'success');
+            showToast(`✅ Добавлено (${value.length} симв.)`, 'success');
         }
         return true;
     }
@@ -526,7 +468,7 @@ function generateJSON() {
         value = value.trim();
         const index = scannedItems.indexOf(value);
         if (index === -1) {
-            showToast(`❌ "${value.substring(0, 30)}..." не найдено в списке`, 'error');
+            showToast(`❌ Код не найден в списке`, 'error');
             return false;
         }
         scannedItems.splice(index, 1);
@@ -549,18 +491,16 @@ function generateJSON() {
         if (!value || value.trim() === '') return;
         value = value.trim();
         
-        if (lastTsdScan) {
-            const parsed = parsePalletBarcode(value);
-            if (parsed.parsed) {
-                lastTsdScan.textContent = `✓ Последний скан: Контейнер ${parsed.containerNumber} | Партия ${parsed.batchNumber}`;
-            } else {
-                lastTsdScan.textContent = `✓ Последний скан: ${value.substring(0, 40)}${value.length > 40 ? '...' : ''}`;
-            }
+        const parsed = parsePalletBarcode(value);
+        if (parsed.parsed) {
+            if (lastTsdScan) lastTsdScan.textContent = `✓ Последний скан: Контейнер ${parsed.containerNumber}`;
+        } else {
+            if (lastTsdScan) lastTsdScan.textContent = `✓ Последний скан: ${value.substring(0, 40)}${value.length > 40 ? '...' : ''}`;
         }
         
         executeAction(value);
-        scanInput.value = '';
-        setTimeout(() => scanInput.focus(), 50);
+        if (scanInput) scanInput.value = '';
+        setTimeout(() => { if (scanInput) scanInput.focus(); }, 50);
     }
     
     // ========== АВТОМАТИЧЕСКОЕ ОПРЕДЕЛЕНИЕ СКАНА ==========
@@ -601,6 +541,7 @@ function generateJSON() {
     // ========== ВЫБОР ДЕЙСТВИЯ ==========
     function setAction(action) {
         currentAction = action;
+        if (!actionStatus) return;
         if (action === 'add') {
             actionStatus.textContent = '➕ РЕЖИМ: ДОБАВЛЕНИЕ';
             actionStatus.className = 'action-status add';
@@ -610,11 +551,18 @@ function generateJSON() {
             actionStatus.className = 'action-status remove';
             showToast('Режим ИСКЛЮЧЕНИЯ активирован', 'info');
         }
-        setTimeout(() => scanInput.focus(), 100);
+        setTimeout(() => { if (scanInput) scanInput.focus(); }, 100);
     }
     
     // ========== СТАРТ ЗАДАНИЯ ==========
     function startTask() {
+        console.log('startTask() вызвана');
+        
+        if (!taskNumberInput) {
+            console.error('taskNumberInput не найден');
+            return;
+        }
+        
         const taskNum = taskNumberInput.value.trim();
         if (!taskNum) {
             showToast('❌ Введите номер задания', 'error');
@@ -625,19 +573,70 @@ function generateJSON() {
         scannedItems = [];
         currentAction = null;
         
-        actionStatus.textContent = '⚡ Не выбрано';
-        actionStatus.className = 'action-status';
+        if (actionStatus) {
+            actionStatus.textContent = '⚡ Не выбрано';
+            actionStatus.className = 'action-status';
+        }
         
-        currentTaskDisplay.textContent = currentTask;
+        if (currentTaskDisplay) currentTaskDisplay.textContent = currentTask;
         updateList();
         
-        startScreen.style.display = 'none';
-        mainScreen.style.display = 'block';
+        if (startScreen) startScreen.style.display = 'none';
+        if (mainScreen) mainScreen.style.display = 'block';
         
         showToast(`✅ Задание "${currentTask}" начато`, 'success');
-        showToast('🎯 Выберите действие (ДОБАВИТЬ/ИСКЛЮЧИТЬ)', 'info');
+        showToast('🎯 Выберите действие', 'info');
         
-        setTimeout(() => scanInput.focus(), 500);
+        setTimeout(() => { if (scanInput) scanInput.focus(); }, 500);
+    }
+    
+    // ========== ФОРМИРОВАНИЕ JSON ДЛЯ ЭКСПОРТА ==========
+    function generateJSON() {
+        const items = scannedItems.map(item => {
+            const parsed = parsePalletBarcode(item);
+            if (parsed.parsed) {
+                return {
+                    sourceValue: parsed.sourceValue,
+                    containerNumber: parsed.containerNumber,
+                    nomenclatureId: parsed.nomenclatureId,
+                    productionDate: parsed.productionDate,
+                    batchNumber: parsed.batchNumber,
+                    quantityPerPallet: parsed.quantityPerPallet,
+                    quantityPerBox: parsed.quantityPerBox,
+                    parsed: true
+                };
+            } else {
+                return { sourceValue: parsed.sourceValue, parsed: false };
+            }
+        });
+        
+        return JSON.stringify({
+            task: {
+                taskNumber: currentTask,
+                timestamp: new Date().toISOString(),
+                totalCount: scannedItems.length,
+                items: items
+            }
+        }, null, 2);
+    }
+    
+    // ========== СОХРАНЕНИЕ JSON ФАЙЛА ==========
+    function saveJSON() {
+        const jsonContent = generateJSON();
+        const filename = `ONEGA_${String(currentTask).replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.json`;
+        
+        const blob = new Blob([jsonContent], {type: 'application/json;charset=utf-8'});
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        console.log('=== JSON экспорт ===', jsonContent);
+        return filename;
     }
     
     // ========== ЗАВЕРШЕНИЕ ЗАДАНИЯ ==========
@@ -651,13 +650,12 @@ function generateJSON() {
         const filename = saveJSON();
         showToast(`💾 JSON файл сохранён: ${filename}`, 'success');
         
-        // Сброс и возврат на стартовый экран
         currentTask = null;
         scannedItems = [];
         currentAction = null;
-        startScreen.style.display = 'block';
-        mainScreen.style.display = 'none';
-        taskNumberInput.value = '';
+        if (startScreen) startScreen.style.display = 'block';
+        if (mainScreen) mainScreen.style.display = 'none';
+        if (taskNumberInput) taskNumberInput.value = '';
         updateList();
     }
     
@@ -666,32 +664,53 @@ function generateJSON() {
             currentTask = null;
             scannedItems = [];
             currentAction = null;
-            startScreen.style.display = 'block';
-            mainScreen.style.display = 'none';
-            taskNumberInput.value = '';
+            if (startScreen) startScreen.style.display = 'block';
+            if (mainScreen) mainScreen.style.display = 'none';
+            if (taskNumberInput) taskNumberInput.value = '';
             showToast('🏠 Задание закрыто', 'info');
         }
     }
     
     // ========== НАВЕШИВАНИЕ ОБРАБОТЧИКОВ ==========
-    startTsdBtn.addEventListener('click', startTask);
-    closeTaskBtn.addEventListener('click', closeTask);
-    finishTaskBtn.addEventListener('click', finishTask);
-    setAddActionBtn.addEventListener('click', () => setAction('add'));
-    setRemoveActionBtn.addEventListener('click', () => setAction('remove'));
-    
-    clearAllBtn.addEventListener('click', () => {
-        if (confirm(`Очистить все ${scannedItems.length} значений?`)) {
-            scannedItems = [];
-            updateList();
-            showToast('🗑️ Список очищен', 'info');
+    function init() {
+        console.log('Инициализация...');
+        
+        if (startTsdBtn) {
+            startTsdBtn.addEventListener('click', startTask);
+            console.log('Обработчик startTsdBtn установлен');
+        } else {
+            console.error('startTsdBtn не найден!');
         }
-    });
+        
+        if (closeTaskBtn) closeTaskBtn.addEventListener('click', closeTask);
+        if (finishTaskBtn) finishTaskBtn.addEventListener('click', finishTask);
+        if (setAddActionBtn) setAddActionBtn.addEventListener('click', () => setAction('add'));
+        if (setRemoveActionBtn) setRemoveActionBtn.addEventListener('click', () => setAction('remove'));
+        
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', () => {
+                if (confirm(`Очистить все ${scannedItems.length} значений?`)) {
+                    scannedItems = [];
+                    updateList();
+                    showToast('🗑️ Список очищен', 'info');
+                }
+            });
+        }
+        
+        setupAutoScanDetection();
+        updateList();
+        
+        if (taskNumberInput) {
+            setTimeout(() => taskNumberInput.focus(), 100);
+        }
+    }
     
-    setupAutoScanDetection();
-    updateList();
-    
-    setTimeout(() => taskNumberInput.focus(), 100);
+    // Запуск после загрузки страницы
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 </script>
 </body>
 </html>
